@@ -219,8 +219,8 @@ public class AuthService {
         String refreshTokenValue = jwtTokenProvider.generateRefreshToken();
 
         Instant refreshExpiry = jwtTokenProvider.getRefreshTokenExpiryInstant();
-        refreshTokenRepository.findByUserId(user.getId())
-            .ifPresent(existing -> refreshTokenRepository.deleteById(existing.getId()));
+        refreshTokenRepository.deleteByUserId(user.getId());
+        refreshTokenRepository.flush();
 
         RefreshToken refreshToken = RefreshToken.builder()
             .user(user)
