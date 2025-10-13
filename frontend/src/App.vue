@@ -33,6 +33,14 @@
 
     <!-- Main content -->
     <main :class="['app-main', isAuthenticated ? 'main-with-sidebar' : '']">
+      <div v-if="isAuthenticated" class="container page-header">
+        <nav aria-label="Breadcrumb">
+          <RouterLink to="/" class="nav-link">首页</RouterLink>
+          <span style="opacity:.6; padding: 0 6px;">/</span>
+          <span>{{ pageTitle }}</span>
+        </nav>
+        <h1 style="margin:0; font-size:18px;">{{ pageTitle }}</h1>
+      </div>
       <RouterView />
     </main>
   </div>
@@ -40,15 +48,17 @@
 
 <script setup>
 import { computed } from 'vue';
-import { RouterLink, RouterView } from 'vue-router';
+import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 
 const authStore = useAuthStore();
+const route = useRoute();
 
 const user = computed(() => authStore.user);
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const isOwnerOrAdmin = computed(() => authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']));
 const isTenant = computed(() => authStore.hasAnyRole(['ROLE_TENANT']));
+const pageTitle = computed(() => route.meta?.title ?? '');
 
 const logout = () => {
   authStore.logout();

@@ -12,48 +12,49 @@ const router = createRouter({
       path: '/',
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, title: '仪表盘' }
     },
     {
       path: '/properties',
       name: 'properties',
       component: () => import('../views/PropertiesView.vue'),
-      meta: { requiresAuth: true, roles: ['ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_TENANT'] }
+      meta: { requiresAuth: true, roles: ['ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_TENANT'], title: '物业管理' }
     },
     {
       path: '/maintenance',
       name: 'maintenance',
       component: () => import('../views/MaintenanceView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, title: '维修' }
     },
     {
       path: '/leases',
       name: 'leases',
       component: () => import('../views/LeasesView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, title: '租约' }
     },
     {
       path: '/payments',
       name: 'payments',
       component: () => import('../views/PaymentsView.vue'),
-      meta: { requiresAuth: true, roles: ['ROLE_OWNER', 'ROLE_ADMIN'] }
+      meta: { requiresAuth: true, roles: ['ROLE_OWNER', 'ROLE_ADMIN'], title: '收支记录' }
     },
     {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue'),
-      meta: { guestOnly: true }
+      meta: { guestOnly: true, title: '登录' }
     },
     {
       path: '/register',
       name: 'register',
       component: () => import('../views/RegisterView.vue'),
-      meta: { guestOnly: true }
+      meta: { guestOnly: true, title: '注册' }
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: () => import('../views/NotFoundView.vue')
+      component: () => import('../views/NotFoundView.vue'),
+      meta: { title: '未找到' }
     }
   ]
 });
