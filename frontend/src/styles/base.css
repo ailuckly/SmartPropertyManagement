@@ -54,6 +54,106 @@ button:focus-visible,
   outline-offset: 2px;
 }
 
+/* Layout helpers */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+/* Admin shell */
+.sidebar {
+  position: fixed;
+  top: 64px; /* header height */
+  left: 0;
+  width: 240px;
+  bottom: 0;
+  background: #0b1220;
+  color: #cbd5e1;
+  border-right: 1px solid rgba(148,163,184,.1);
+  padding: 16px 12px;
+  overflow-y: auto;
+}
+
+.sidebar .section-title {
+  font-size: 12px;
+  letter-spacing: .04em;
+  color: #94a3b8;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.sidebar .nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar .nav a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #cbd5e1;
+}
+
+.sidebar .nav a.router-link-active {
+  background: rgba(148, 163, 184, 0.12);
+  color: #fff;
+}
+
+/* main area offset by sidebar */
+.main-with-sidebar {
+  margin-left: 240px;
+}
+
+@media (max-width: 960px) {
+  .sidebar { display: none; }
+  .main-with-sidebar { margin-left: 0; }
+}
+
+/* Cards */
+.card header.title {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+/* Tables */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table th {
+  background: #f1f5f9;
+  text-align: left;
+  font-weight: 600;
+  color: #334155;
+}
+
+.table th, .table td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* Scrollbar (WebKit) */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
 .form-field {
   display: flex;
   flex-direction: column;

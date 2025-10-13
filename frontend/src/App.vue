@@ -1,18 +1,11 @@
 <template>
   <div class="app-container">
+    <!-- Top header -->
     <header class="app-header">
       <div class="logo-group">
         <img src="@/assets/logo.svg" alt="logo" />
         <span>智慧物业管理平台</span>
       </div>
-      <nav>
-        <RouterLink v-if="isAuthenticated" to="/" class="nav-link">仪表盘</RouterLink>
-        <RouterLink v-if="isAuthenticated" to="/properties" class="nav-link">物业管理</RouterLink>
-        <RouterLink v-if="isTenant" to="/maintenance" class="nav-link">维修申请</RouterLink>
-        <RouterLink v-if="isOwnerOrAdmin" to="/maintenance" class="nav-link">维修工单</RouterLink>
-        <RouterLink v-if="isAuthenticated" to="/leases" class="nav-link">租约</RouterLink>
-        <RouterLink v-if="isOwnerOrAdmin" to="/payments" class="nav-link">收支记录</RouterLink>
-      </nav>
       <div class="header-actions">
         <template v-if="isAuthenticated">
           <span class="welcome">你好，{{ user?.username }}</span>
@@ -24,7 +17,22 @@
         </template>
       </div>
     </header>
-    <main class="app-main">
+
+    <!-- Sidebar for authenticated users -->
+    <aside v-if="isAuthenticated" class="sidebar">
+      <div class="section-title">导航</div>
+      <nav class="nav">
+        <RouterLink to="/" class="nav-item">仪表盘</RouterLink>
+        <RouterLink to="/properties" class="nav-item">物业管理</RouterLink>
+        <RouterLink v-if="isTenant" to="/maintenance" class="nav-item">维修申请</RouterLink>
+        <RouterLink v-if="isOwnerOrAdmin" to="/maintenance" class="nav-item">维修工单</RouterLink>
+        <RouterLink to="/leases" class="nav-item">租约</RouterLink>
+        <RouterLink v-if="isOwnerOrAdmin" to="/payments" class="nav-item">收支记录</RouterLink>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main :class="['app-main', isAuthenticated ? 'main-with-sidebar' : '']">
       <RouterView />
     </main>
   </div>
@@ -107,5 +115,6 @@ nav {
   flex: 1;
   padding: 24px;
   background: #f1f5f9;
+  min-height: calc(100vh - 64px);
 }
 </style>

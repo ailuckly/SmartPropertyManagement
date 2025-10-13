@@ -127,8 +127,8 @@ const handleSubmit = async () => {
 
 <style scoped>
 .auth-card {
-  max-width: 520px;
-  margin: 40px auto;
+  max-width: 560px;
+  margin: 56px auto;
 }
 
 .auth-card h2 {
