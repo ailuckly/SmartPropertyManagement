@@ -20,8 +20,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Business facade for CRUD operations on {@link com.example.propertymanagement.model.Property} entities.
- * Handles role-based access control and ownership checks so controllers can remain declarative.
+ * 物业模块业务门面，负责：
+ * <ul>
+ *   <li>提供 {@link com.example.propertymanagement.model.Property} 的增删改查能力；</li>
+ *   <li>在服务层执行角色/业主校验，避免控制器重复判断；</li>
+ *   <li>统一封装分页与异常处理逻辑。</li>
+ * </ul>
  */
 @Service
 public class PropertyService {
@@ -35,7 +39,11 @@ public class PropertyService {
     }
 
     /**
-     * Retrieves a paginated property list. When {@code ownerId} is provided the list is scoped to that user.
+     * 查询物业列表，当提供 ownerId 时只返回指定业主的数据。
+     *
+     * @param pageable 分页参数
+     * @param ownerId  业主 ID，可为 null
+     * @return 包含分页元数据的 {@link PageResponse}
      */
     @Transactional(readOnly = true)
     public PageResponse<PropertyDto> getProperties(Pageable pageable, Long ownerId) {
@@ -49,7 +57,11 @@ public class PropertyService {
     }
 
     /**
-     * Loads a single property DTO and raises a 404 style exception when absent.
+     * 根据 ID 获取物业详情。
+     *
+     * @param id 物业 ID
+     * @return 物业 DTO
+     * @throws ResourceNotFoundException 未找到目标数据时抛出
      */
     @Transactional(readOnly = true)
     public PropertyDto getProperty(Long id) {
@@ -58,7 +70,10 @@ public class PropertyService {
     }
 
     /**
-     * Creates a property. Admins can target any owner, whereas owners can only create properties for themselves.
+     * 创建物业。管理员可指定任意业主；业主本人只能为自己创建物业。
+     *
+     * @param request 请求体
+     * @return 新建的物业 DTO
      */
     @Transactional
     public PropertyDto createProperty(PropertyRequest request) {
@@ -89,7 +104,11 @@ public class PropertyService {
     }
 
     /**
-     * Updates an existing property, enforcing the same ownership / admin checks as {@link #createProperty}.
+     * 更新物业，权限规则与 {@link #createProperty(PropertyRequest)} 相同。
+     *
+     * @param id      物业 ID
+     * @param request 新数据
+     * @return 更新后的 DTO
      */
     @Transactional
     public PropertyDto updateProperty(Long id, PropertyRequest request) {
@@ -123,7 +142,9 @@ public class PropertyService {
     }
 
     /**
-     * Deletes a property after ensuring the caller has rights.
+     * 删除物业。只有管理员或物业所有者可执行。
+     *
+     * @param id 物业 ID
      */
     @Transactional
     public void deleteProperty(Long id) {
@@ -138,7 +159,7 @@ public class PropertyService {
     }
 
     /**
-     * Helper that wraps repository lookups and raises a domain-specific 404 when nothing is found.
+     * 查询物业实体，若不存在则抛出 404 异常。
      */
     private Property findPropertyOrThrow(Long id) {
         return propertyRepository.findById(id)
@@ -146,7 +167,11 @@ public class PropertyService {
     }
 
     /**
-     * Ensures the correct owner is associated with the property based on the caller's role context.
+     * 校验并返回物业所属业主。
+     *
+     * @param principal         当前登录用户
+     * @param ownerIdFromRequest 请求体中的业主 ID
+     * @return 实际的业主实体
      */
     private User determineOwner(UserPrincipal principal, Long ownerIdFromRequest) {
         if (isAdmin(principal)) {
@@ -166,7 +191,7 @@ public class PropertyService {
     }
 
     /**
-     * Resolves the currently authenticated principal; throws when the context is empty.
+     * 获取当前登录用户，若未登录则抛出异常。
      */
     private UserPrincipal getAuthenticatedUser() {
         return SecurityUtils.getCurrentUserPrincipal()

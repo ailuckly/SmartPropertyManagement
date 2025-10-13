@@ -25,11 +25,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Centralises Spring Security configuration:
+ * Spring Security 配置中心：
  * <ul>
- *   <li>Registers JWT filter and stateless session policy.</li>
- *   <li>Defines endpoint access rules and exposes {@link AuthenticationManager} / {@link PasswordEncoder} beans.</li>
- *   <li>Builds a dynamic CORS configuration based on {@code app.security.cors.allowed-origins}.</li>
+ *   <li>关闭 CSRF、配置无状态 Session，并注入自定义 JWT 过滤器；</li>
+ *   <li>集中定义接口访问策略以及用于密码加密 / 身份认证的基础 Bean；</li>
+ *   <li>根据配置项 {@code app.security.cors.allowed-origins} 构建 CORS 白名单。</li>
  * </ul>
  */
 @Configuration
@@ -56,8 +56,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Configures the request filter chain: disables CSRF for stateless JWT, wires exception handling
-     * and ensures the JWT filter runs before the username/password filter.
+     * 配置安全过滤链：禁用 CSRF、开启 CORS、设置异常处理及 JWT 过滤器顺序。
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -79,7 +78,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Exposes a BCrypt encoder so services can hash passwords consistently.
+     * 暴露 BCrypt 编码器，后续服务统一调用进行密码加密。
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -87,7 +86,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Delegates to Spring Boot's {@link AuthenticationConfiguration} to obtain the shared authentication manager.
+     * 获取 Spring Boot 自动配置的认证管理器，供服务层调用。
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
@@ -95,7 +94,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Builds the CORS policy using the comma-separated origin list defined in configuration.
+     * 根据配置项构建 CORS 规则，允许前端请求携带 Cookie。
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

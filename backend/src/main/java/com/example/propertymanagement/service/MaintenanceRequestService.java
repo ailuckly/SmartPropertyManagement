@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 
 /**
- * Coordinates creation and progression of maintenance requests while enforcing role-specific constraints.
+ * 维修工单业务服务：集中处理工单提报、分页查询、状态更新等逻辑，并在服务层落地角色权限控制。
  */
 @Service
 public class MaintenanceRequestService {
@@ -43,7 +43,12 @@ public class MaintenanceRequestService {
     }
 
     /**
-     * Allows tenants to raise a maintenance ticket for a property they occupy.
+     * 租客提交维修请求。
+     *
+     * @param requestDto 提交表单
+     * @return 新建的工单 DTO
+     * @throws ForbiddenException  当前用户不是租客时抛出
+     * @throws ResourceNotFoundException 当物业或当前用户不存在时抛出
      */
     @Transactional
     public MaintenanceRequestDto createRequest(MaintenanceRequestCreate requestDto) {
@@ -69,7 +74,10 @@ public class MaintenanceRequestService {
     }
 
     /**
-     * Lists maintenance requests scoped to the caller: admins see all, owners see their properties, tenants see theirs.
+     * 分页获取工单列表：管理员查看全部，业主查看名下物业，租客查看自己提交的工单。
+     *
+     * @param pageable 分页参数
+     * @return 包含分页元数据的工单列表
      */
     @Transactional(readOnly = true)
     public PageResponse<MaintenanceRequestDto> getRequests(Pageable pageable) {
@@ -86,7 +94,11 @@ public class MaintenanceRequestService {
     }
 
     /**
-     * Updates the status of a maintenance ticket. Only administrators and owners are permitted to perform the action.
+     * 更新工单状态，仅管理员与业主可执行。
+     *
+     * @param id      工单 ID
+     * @param request 状态更新请求
+     * @return 更新后的工单 DTO
      */
     @Transactional
     public MaintenanceRequestDto updateStatus(Long id, MaintenanceStatusUpdate request) {

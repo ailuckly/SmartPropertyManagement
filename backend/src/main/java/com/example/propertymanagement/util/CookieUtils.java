@@ -15,7 +15,13 @@ public final class CookieUtils {
     }
 
     /**
-     * Adds an HttpOnly cookie with sane defaults (SameSite=Lax, secure flag toggled by parameter).
+     * 构造并写入 HttpOnly Cookie，统一使用 SameSite=Lax。
+     *
+     * @param response 响应
+     * @param name     Cookie 名称
+     * @param value    Cookie 值
+     * @param maxAge   生存时长
+     * @param secure   是否仅在 HTTPS 传输（根据请求协议决定）
      */
     public static void addCookie(HttpServletResponse response,
                                  String name,
@@ -33,7 +39,11 @@ public final class CookieUtils {
     }
 
     /**
-     * Clears an HttpOnly cookie by re-issuing it with a zero max-age.
+     * 清除指定 HttpOnly Cookie。
+     *
+     * @param response 响应
+     * @param name     Cookie 名称
+     * @param secure   是否仅在 HTTPS 传输
      */
     public static void deleteCookie(HttpServletResponse response,
                                     String name,

@@ -33,11 +33,11 @@ import java.time.Instant;
 import java.util.Set;
 
 /**
- * Encapsulates the full authentication life cycle, including registration, login, token refresh and logout.
+ * 认证服务：封装注册、登录、刷新令牌、注销等全流程逻辑。
  * <p>
- * The service coordinates persistence, password hashing, JWT issuance and HttpOnly cookie management so that
- * controllers can stay thin. Every public method is wrapped in a transaction to guarantee that refresh-token
- * records stay consistent with the cookies returned to the client.
+ * - 负责协调用户/角色持久化、密码加密、JWT 签发与 HttpOnly Cookie 管理；
+ * - 统一保证刷新令牌与客户端 Cookies 状态一致，防止出现“服务端已失效但客户端仍携带旧 cookie”的安全风险；
+ * - 所有对外方法均带事务，确保认证相关数据的一致性。
  */
 @Service
 public class AuthService {
@@ -67,7 +67,13 @@ public class AuthService {
     }
 
     /**
-     * Registers a new user, persists an initial refresh token and returns the authenticated session payload.
+     * 用户注册：创建帐号、自动登录并返回会话信息。
+     *
+     * @param request       注册表单
+     * @param httpRequest   原始 HTTP 请求（用于检测 HTTPS 等信息）
+     * @param httpResponse  原始 HTTP 响应（用于写入 HttpOnly Cookie）
+     * @return 注册后构建的 {@link AuthResponse}，包含用户信息
+     * @throws BadRequestException 用户名或邮箱已存在时抛出
      */
     @Transactional
     public AuthResponse register(RegisterRequest request,
@@ -102,7 +108,13 @@ public class AuthService {
     }
 
     /**
-     * Authenticates the supplied credentials, issues fresh tokens and returns the authenticated session payload.
+     * 用户登录：校验凭证、生成访问令牌 / 刷新令牌并返回会话信息。
+     *
+     * @param request       登录表单
+     * @param httpRequest   原始 HTTP 请求
+     * @param httpResponse  原始 HTTP 响应
+     * @return 登录成功后的 {@link AuthResponse}
+     * @throws UnauthorizedException 当用户名/密码错误时抛出
      */
     @Transactional
     public AuthResponse login(LoginRequest request,
@@ -125,7 +137,12 @@ public class AuthService {
     }
 
     /**
-     * Re-issues a new access token pair when a valid refresh token is presented in the cookies.
+     * 刷新令牌：通过 HttpOnly Cookie 中携带的刷新令牌获取新的访问令牌。
+     *
+     * @param request  原始请求（包含 Cookie）
+     * @param response 用于写入新的 Cookie
+     * @return 刷新后的用户会话
+     * @throws UnauthorizedException 当刷新令牌缺失、无效或过期时抛出
      */
     @Transactional
     public AuthResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
@@ -149,7 +166,10 @@ public class AuthService {
     }
 
     /**
-     * Deletes the refresh token persisted in the database (if any) and clears the authentication cookies.
+     * 注销：移除数据库中的刷新令牌记录并清除客户端的访问/刷新 Cookie。
+     *
+     * @param request  原始请求
+     * @param response 原始响应
      */
     @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response) {
@@ -169,7 +189,10 @@ public class AuthService {
     }
 
     /**
-     * Loads the current user profile for the authenticated principal. Throws when the session is missing or stale.
+     * 查询当前登录用户。
+     *
+     * @return 登录用户的 DTO
+     * @throws UnauthorizedException 当上下文中没有认证信息时抛出
      */
     @Transactional(readOnly = true)
     public com.example.propertymanagement.dto.user.UserDto me() {
@@ -181,7 +204,12 @@ public class AuthService {
     }
 
     /**
-     * Generates fresh JWT + refresh-token pair and synchronises both cookie payload and database record.
+     * 生成访问令牌 / 刷新令牌并与客户端 Cookie、数据库刷新令牌表同步。
+     *
+     * @param username   用户名（写入 JWT）
+     * @param user       数据库用户实体
+     * @param request    原始请求，用于判断是否 HTTPS
+     * @param response   原始响应，用于写入 Cookie
      */
     private void attachTokensToResponse(String username,
                                         User user,
@@ -219,7 +247,7 @@ public class AuthService {
     }
 
     /**
-     * Pulls the refresh token from HttpOnly cookies so that controllers never have to handle cookie parsing logic.
+     * 从请求 Cookie 中提取刷新令牌值。若不存在则返回 {@code null}。
      */
     private String extractRefreshToken(HttpServletRequest request) {
         if (request.getCookies() == null) {

@@ -35,6 +35,7 @@ import { useAuthStore } from '../stores/auth';
 /**
  * Lightweight dashboard that pulls high-level counts for properties, leases and maintenance requests.
  */
+// 仪表盘展示的核心统计数据
 const stats = reactive({
   properties: 0,
   leases: 0,

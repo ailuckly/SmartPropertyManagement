@@ -23,8 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Encapsulates lifecycle operations for lease contracts, including creation, updates, retrieval and deletion.
- * Ownership rules are enforced so that tenants can only view their own contracts while owners / admins manage data.
+ * 租约业务层：封装租约的创建、更新、查询、删除等流程，并根据角色限制访问范围。
  */
 @Service
 public class LeaseService {
@@ -42,7 +41,10 @@ public class LeaseService {
     }
 
     /**
-     * Returns leases visible to the current user based on their role.
+     * 分页返回当前用户可见的租约：管理员查看全部，业主查看自己物业的租约，租客查看个人租约。
+     *
+     * @param pageable 分页参数
+     * @return 租约分页结果
      */
     @Transactional(readOnly = true)
     public PageResponse<LeaseDto> getLeases(Pageable pageable) {
@@ -59,7 +61,11 @@ public class LeaseService {
     }
 
     /**
-     * Retrieves a lease and ensures the caller has visibility rights.
+     * 根据 ID 查询租约并检查可见性。
+     *
+     * @param id 租约 ID
+     * @return 租约 DTO
+     * @throws ForbiddenException 若无权查看时抛出
      */
     @Transactional(readOnly = true)
     public LeaseDto getLease(Long id) {
@@ -77,7 +83,10 @@ public class LeaseService {
     }
 
     /**
-     * Creates a new lease. Owners can only bind their own properties; admins can target any property.
+     * 创建租约。业主仅能为自己名下物业创建，管理员不受限制。
+     *
+     * @param request 创建表单
+     * @return 创建后的租约 DTO
      */
     @Transactional
     public LeaseDto createLease(LeaseRequest request) {
@@ -115,7 +124,11 @@ public class LeaseService {
     }
 
     /**
-     * Updates an existing lease contract with the same security constraints as creation.
+     * 更新租约信息，同样遵守所有权与角色的约束。
+     *
+     * @param id      租约 ID
+     * @param request 更新内容
+     * @return 更新后的租约 DTO
      */
     @Transactional
     public LeaseDto updateLease(Long id, LeaseRequest request) {
@@ -154,7 +167,9 @@ public class LeaseService {
     }
 
     /**
-     * Removes a lease record and reverts the associated property status back to {@code AVAILABLE}.
+     * 删除租约，并把关联物业的状态恢复为 {@code AVAILABLE}。
+     *
+     * @param id 租约 ID
      */
     @Transactional
     public void deleteLease(Long id) {

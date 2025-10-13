@@ -115,7 +115,7 @@ const form = reactive({
   status: 'ACTIVE'
 });
 
-const leases = ref([]);
+const leases = ref([]); // 租约表格
 const pagination = reactive({
   page: 0,
   size: 10,

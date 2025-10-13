@@ -20,8 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Handles recording and querying payment transactions tied to leases. Access is restricted to administrators,
- * lease owners and the tenant bound to the lease (for read-only operations).
+ * 租金收支服务：处理租金记录的写入与查询。
+ * <p>
+ * - 写入权限：管理员 / 物业业主；
+ * - 查询权限：管理员 / 物业业主 / 租客（仅可查看本人租约）。
+ * </p>
  */
 @Service
 public class PaymentService {
@@ -35,7 +38,11 @@ public class PaymentService {
     }
 
     /**
-     * Fetches payment history for a lease while ensuring that the caller has permission to inspect it.
+     * 查询租约对应的支付记录，并在服务层完成权限校验。
+     *
+     * @param leaseId  租约 ID
+     * @param pageable 分页参数
+     * @return 支付记录分页结果
      */
     @Transactional(readOnly = true)
     public PageResponse<PaymentDto> getPayments(Long leaseId, Pageable pageable) {
@@ -50,7 +57,10 @@ public class PaymentService {
     }
 
     /**
-     * Records a payment against a lease. Only admins or the property owner can register the transaction.
+     * 记录支付信息，仅管理员或物业业主可执行。
+     *
+     * @param request 支付表单
+     * @return 保存后的支付记录
      */
     @Transactional
     public PaymentDto recordPayment(PaymentRequest request) {

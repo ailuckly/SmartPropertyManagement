@@ -32,7 +32,10 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Creates a JWT access token for the given principal. Convenience overload for frameworks that expose UserDetails.
+     * 根据 Spring Security 的 {@link UserDetails} 生成访问令牌。
+     *
+     * @param principal 当前登录用户
+     * @return JWT 字符串
      */
     public String generateAccessToken(UserDetails principal) {
         return generateAccessToken(principal.getUsername());
@@ -40,6 +43,9 @@ public class JwtTokenProvider {
 
     /**
      * Creates a JWT access token for the provided username.
+     *
+     * @param username 用户名
+     * @return JWT 字符串
      */
     public String generateAccessToken(String username) {
         Instant now = Instant.now();
@@ -54,14 +60,18 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Calculates the Instant when a token generated "now" would expire.
+     * 计算“现在”生成的访问令牌的过期时间戳，便于生成 Cookie max-age。
+     *
+     * @return 过期时间
      */
     public Instant getAccessTokenExpiryInstant() {
         return Instant.now().plus(jwtProperties.getAccessTokenExpirationMinutes(), ChronoUnit.MINUTES);
     }
 
     /**
-     * Calculates the Instant when a refresh token generated "now" would expire.
+     * 计算“现在”生成的刷新令牌过期时间。
+     *
+     * @return 过期时间
      */
     public Instant getRefreshTokenExpiryInstant() {
         return Instant.now().plus(jwtProperties.getRefreshTokenExpirationDays(), ChronoUnit.DAYS);
@@ -69,6 +79,9 @@ public class JwtTokenProvider {
 
     /**
      * Validates the supplied token signature and expiry. Returns {@code false} on any parsing errors.
+     *
+     * @param token JWT 字符串
+     * @return 是否有效
      */
     public boolean validateToken(String token) {
         try {
@@ -81,6 +94,9 @@ public class JwtTokenProvider {
 
     /**
      * Extracts the subject claim (username) from the token.
+     *
+     * @param token JWT 字符串
+     * @return 用户名
      */
     public String getUsernameFromToken(String token) {
         return parseClaims(token).getBody().getSubject();
@@ -88,6 +104,9 @@ public class JwtTokenProvider {
 
     /**
      * Returns the parsed expiry date for introspection operations.
+     *
+     * @param token JWT 字符串
+     * @return 过期时间
      */
     public Date getExpiryDate(String token) {
         return parseClaims(token).getBody().getExpiration();
@@ -95,6 +114,8 @@ public class JwtTokenProvider {
 
     /**
      * Generates a cryptographically random refresh token value.
+     *
+     * @return 刷新令牌字符串
      */
     public String generateRefreshToken() {
         return UUID.randomUUID().toString();

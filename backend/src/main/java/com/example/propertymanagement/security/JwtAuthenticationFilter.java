@@ -38,8 +38,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Attempts to extract a token for every request, validates it and pushes the authentication into the context.
-     * No exception is thrown for missing/invalid tokens so unauthenticated requests can still reach anonymous handlers.
+     * 核心过滤逻辑：从请求中解析访问令牌，验证通过后构造 {@link UsernamePasswordAuthenticationToken}
+     * 并写入 SecurityContext。若令牌缺失或校验失败，会继续放行后续过滤器链。
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -62,7 +62,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Checks the Bearer header first and then falls back to HttpOnly cookies using the configured cookie name.
+     * Token 提取策略：先查找 Authorization Bearer 头，若不存在则读取 HttpOnly Cookie。
+     *
+     * @param request 当前请求
+     * @return 解析出的 token，若不存在则返回 {@code null}
      */
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);

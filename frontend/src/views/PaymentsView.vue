@@ -88,7 +88,7 @@ const form = reactive({
   paymentMethod: ''
 });
 
-const payments = ref([]);
+const payments = ref([]); // 支付记录表格数据
 const error = ref('');
 
 /**

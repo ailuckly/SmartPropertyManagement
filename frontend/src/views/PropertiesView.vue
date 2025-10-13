@@ -132,7 +132,7 @@ import { useAuthStore } from '../stores/auth';
  * Form state lives in reactive objects to simplify reset logic after submission or cancellation.
  */
 const authStore = useAuthStore();
-const properties = ref([]);
+const properties = ref([]); // 表格数据源
 const pagination = reactive({
   page: 0,
   size: 10,
@@ -153,7 +153,7 @@ const form = reactive({
   status: 'AVAILABLE'
 });
 
-const editingId = ref(null);
+const editingId = ref(null); // null 表示当前为“新增”模式
 const error = ref('');
 
 const isAdmin = authStore.hasAnyRole(['ROLE_ADMIN']);
