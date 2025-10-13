@@ -24,6 +24,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Centralises Spring Security configuration:
+ * <ul>
+ *   <li>Registers JWT filter and stateless session policy.</li>
+ *   <li>Defines endpoint access rules and exposes {@link AuthenticationManager} / {@link PasswordEncoder} beans.</li>
+ *   <li>Builds a dynamic CORS configuration based on {@code app.security.cors.allowed-origins}.</li>
+ * </ul>
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -47,6 +55,10 @@ public class SecurityConfig {
             .toList();
     }
 
+    /**
+     * Configures the request filter chain: disables CSRF for stateless JWT, wires exception handling
+     * and ensures the JWT filter runs before the username/password filter.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -66,16 +78,25 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Exposes a BCrypt encoder so services can hash passwords consistently.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Delegates to Spring Boot's {@link AuthenticationConfiguration} to obtain the shared authentication manager.
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
 
+    /**
+     * Builds the CORS policy using the comma-separated origin list defined in configuration.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

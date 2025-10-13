@@ -18,6 +18,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Arrays;
 
+/**
+ * Resolves incoming JWT access tokens (from Authorization header or HttpOnly cookies) and,
+ * when valid, populates the Spring Security context with the authenticated principal.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -33,6 +37,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtProperties = jwtProperties;
     }
 
+    /**
+     * Attempts to extract a token for every request, validates it and pushes the authentication into the context.
+     * No exception is thrown for missing/invalid tokens so unauthenticated requests can still reach anonymous handlers.
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -53,6 +61,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Checks the Bearer header first and then falls back to HttpOnly cookies using the configured cookie name.
+     */
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {

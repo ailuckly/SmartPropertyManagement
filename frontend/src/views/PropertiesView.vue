@@ -127,6 +127,10 @@ import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
 
+/**
+ * This view combines a property editor (admins/owners) and a paginated table shared by all authenticated roles.
+ * Form state lives in reactive objects to simplify reset logic after submission or cancellation.
+ */
 const authStore = useAuthStore();
 const properties = ref([]);
 const pagination = reactive({
@@ -154,6 +158,9 @@ const error = ref('');
 
 const isAdmin = authStore.hasAnyRole(['ROLE_ADMIN']);
 
+/**
+ * Loads a page of properties from the backend. Pagination metadata is reused for the navigation controls.
+ */
 const fetchProperties = async () => {
   const { data } = await api.get('/properties', {
     params: { page: pagination.page, size: pagination.size }
@@ -162,6 +169,9 @@ const fetchProperties = async () => {
   pagination.totalPages = Math.max(data.totalPages, 1);
 };
 
+/**
+ * Restores the form to its initial state, keeping ownerId populated for owners to streamline data entry.
+ */
 const resetForm = () => {
   editingId.value = null;
   Object.assign(form, {
@@ -180,6 +190,9 @@ const resetForm = () => {
   error.value = '';
 };
 
+/**
+ * Sends either a create or update request depending on the presence of {@code editingId}.
+ */
 const handleSubmit = async () => {
   try {
     error.value = '';
@@ -209,6 +222,9 @@ const handleSubmit = async () => {
   }
 };
 
+/**
+ * Populates the form with the selected row, switching the component into "edit" mode.
+ */
 const startEdit = (item) => {
   editingId.value = item.id;
   Object.assign(form, {
@@ -226,6 +242,9 @@ const startEdit = (item) => {
   });
 };
 
+/**
+ * Removes a property after explicit confirmation from the user.
+ */
 const remove = async (id) => {
   if (!confirm('确认删除该物业？')) return;
   await api.delete(`/properties/${id}`);

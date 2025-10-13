@@ -100,6 +100,9 @@ import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
 
+/**
+ * Lease management screen. Owners/admins can create or edit leases, while tenants only get the table view.
+ */
 const authStore = useAuthStore();
 const isOwnerOrAdmin = authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']);
 
@@ -122,6 +125,9 @@ const pagination = reactive({
 const editingId = ref(null);
 const error = ref('');
 
+/**
+ * Loads leases visible to the current user and updates pagination metadata.
+ */
 const fetchLeases = async () => {
   const { data } = await api.get('/leases', {
     params: { page: pagination.page, size: pagination.size }
@@ -130,6 +136,9 @@ const fetchLeases = async () => {
   pagination.totalPages = Math.max(data.totalPages, 1);
 };
 
+/**
+ * Handles create/update operations depending on whether we are currently editing a row.
+ */
 const handleSubmit = async () => {
   try {
     error.value = '';
@@ -145,6 +154,9 @@ const handleSubmit = async () => {
   }
 };
 
+/**
+ * Switches the form into edit mode using the values from the selected table row.
+ */
 const startEdit = (item) => {
   editingId.value = item.id;
   Object.assign(form, {
@@ -157,6 +169,9 @@ const startEdit = (item) => {
   });
 };
 
+/**
+ * Deletes a lease after confirming with the user (owners/admins only).
+ */
 const remove = async (id) => {
   if (!confirm('确认删除该租约？')) return;
   await api.delete(`/leases/${id}`);

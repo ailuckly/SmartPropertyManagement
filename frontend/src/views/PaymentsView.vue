@@ -71,6 +71,9 @@ import { reactive, ref } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
 
+/**
+ * Payment centre. Owners/admins can record new payments, whereas authorised viewers can filter by lease.
+ */
 const authStore = useAuthStore();
 const isOwnerOrAdmin = authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']);
 
@@ -88,6 +91,9 @@ const form = reactive({
 const payments = ref([]);
 const error = ref('');
 
+/**
+ * Loads the payments for the specified lease. The lease id is required for the backend API call.
+ */
 const fetchPayments = async () => {
   if (!filters.leaseId) {
     error.value = '请先输入租约ID';
@@ -104,6 +110,9 @@ const fetchPayments = async () => {
   }
 };
 
+/**
+ * Persists a payment entry then refreshes the table so the new row is visible immediately.
+ */
 const handleSubmit = async () => {
   error.value = '';
   try {

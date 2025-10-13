@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Rental payment endpoints. Reads are visible to the lease tenant and owner; writes restricted to owner/admin.
+ */
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
@@ -25,12 +28,18 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
+    /**
+     * Lists payments for a lease after the service layer checks visibility.
+     */
     @GetMapping
     public ResponseEntity<PageResponse<PaymentDto>> getPayments(@RequestParam Long leaseId,
                                                                 @PageableDefault Pageable pageable) {
         return ResponseEntity.ok(paymentService.getPayments(leaseId, pageable));
     }
 
+    /**
+     * Records a payment entry for the selected lease.
+     */
     @PostMapping
     public ResponseEntity<PaymentDto> recordPayment(@Valid @RequestBody PaymentRequest request) {
         PaymentDto dto = paymentService.recordPayment(request);

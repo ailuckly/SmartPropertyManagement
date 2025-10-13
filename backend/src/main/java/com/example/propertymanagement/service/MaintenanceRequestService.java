@@ -24,6 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
+/**
+ * Coordinates creation and progression of maintenance requests while enforcing role-specific constraints.
+ */
 @Service
 public class MaintenanceRequestService {
 
@@ -39,6 +42,9 @@ public class MaintenanceRequestService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Allows tenants to raise a maintenance ticket for a property they occupy.
+     */
     @Transactional
     public MaintenanceRequestDto createRequest(MaintenanceRequestCreate requestDto) {
         UserPrincipal principal = getCurrentUser();
@@ -62,6 +68,9 @@ public class MaintenanceRequestService {
         return MaintenanceMapper.toDto(maintenanceRequestRepository.save(request));
     }
 
+    /**
+     * Lists maintenance requests scoped to the caller: admins see all, owners see their properties, tenants see theirs.
+     */
     @Transactional(readOnly = true)
     public PageResponse<MaintenanceRequestDto> getRequests(Pageable pageable) {
         UserPrincipal principal = getCurrentUser();
@@ -76,6 +85,9 @@ public class MaintenanceRequestService {
         return PageResponse.from(page.map(MaintenanceMapper::toDto));
     }
 
+    /**
+     * Updates the status of a maintenance ticket. Only administrators and owners are permitted to perform the action.
+     */
     @Transactional
     public MaintenanceRequestDto updateStatus(Long id, MaintenanceStatusUpdate request) {
         UserPrincipal principal = getCurrentUser();

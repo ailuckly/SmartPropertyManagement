@@ -16,6 +16,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.UUID;
 
+/**
+ * Central utility that issues and validates JWT access tokens as well as opaque refresh tokens.
+ * The signing key is initialised once per application boot using the shared secret from configuration.
+ */
 @Component
 public class JwtTokenProvider {
 
@@ -27,10 +31,16 @@ public class JwtTokenProvider {
         this.signingKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Creates a JWT access token for the given principal. Convenience overload for frameworks that expose UserDetails.
+     */
     public String generateAccessToken(UserDetails principal) {
         return generateAccessToken(principal.getUsername());
     }
 
+    /**
+     * Creates a JWT access token for the provided username.
+     */
     public String generateAccessToken(String username) {
         Instant now = Instant.now();
         Instant expiry = now.plus(jwtProperties.getAccessTokenExpirationMinutes(), ChronoUnit.MINUTES);
@@ -43,14 +53,23 @@ public class JwtTokenProvider {
             .compact();
     }
 
+    /**
+     * Calculates the Instant when a token generated "now" would expire.
+     */
     public Instant getAccessTokenExpiryInstant() {
         return Instant.now().plus(jwtProperties.getAccessTokenExpirationMinutes(), ChronoUnit.MINUTES);
     }
 
+    /**
+     * Calculates the Instant when a refresh token generated "now" would expire.
+     */
     public Instant getRefreshTokenExpiryInstant() {
         return Instant.now().plus(jwtProperties.getRefreshTokenExpirationDays(), ChronoUnit.DAYS);
     }
 
+    /**
+     * Validates the supplied token signature and expiry. Returns {@code false} on any parsing errors.
+     */
     public boolean validateToken(String token) {
         try {
             parseClaims(token);
@@ -60,14 +79,23 @@ public class JwtTokenProvider {
         }
     }
 
+    /**
+     * Extracts the subject claim (username) from the token.
+     */
     public String getUsernameFromToken(String token) {
         return parseClaims(token).getBody().getSubject();
     }
 
+    /**
+     * Returns the parsed expiry date for introspection operations.
+     */
     public Date getExpiryDate(String token) {
         return parseClaims(token).getBody().getExpiration();
     }
 
+    /**
+     * Generates a cryptographically random refresh token value.
+     */
     public String generateRefreshToken() {
         return UUID.randomUUID().toString();
     }

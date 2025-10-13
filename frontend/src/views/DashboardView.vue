@@ -32,6 +32,9 @@ import { reactive, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
 
+/**
+ * Lightweight dashboard that pulls high-level counts for properties, leases and maintenance requests.
+ */
 const stats = reactive({
   properties: 0,
   leases: 0,
@@ -40,6 +43,9 @@ const stats = reactive({
 
 const authStore = useAuthStore();
 
+/**
+ * Aggregates counts from several endpoints. Failures are tolerated so the page still renders partial data.
+ */
 const fetchStats = async () => {
   try {
     const [propertiesResponse, leasesResponse, maintenanceResponse] = await Promise.all([

@@ -87,6 +87,9 @@ import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
 
+/**
+ * Maintenance centre: tenants can submit requests while owners/admins can track and update ticket status.
+ */
 const authStore = useAuthStore();
 const isTenant = authStore.hasAnyRole(['ROLE_TENANT']);
 const isOwnerOrAdmin = authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']);
@@ -105,6 +108,9 @@ const pagination = reactive({
 
 const error = ref('');
 
+/**
+ * Retrieves maintenance requests appropriate for the logged-in user.
+ */
 const fetchRequests = async () => {
   const { data } = await api.get('/maintenance-requests', {
     params: { page: pagination.page, size: pagination.size }
@@ -113,6 +119,9 @@ const fetchRequests = async () => {
   pagination.totalPages = Math.max(data.totalPages, 1);
 };
 
+/**
+ * Tenant submission handler. Returns the user to a clean form on success.
+ */
 const handleSubmit = async () => {
   error.value = '';
   try {
@@ -125,6 +134,9 @@ const handleSubmit = async () => {
   }
 };
 
+/**
+ * Persists status changes for owners/admins and reverts to the latest data if the call fails.
+ */
 const updateStatus = async (item) => {
   try {
     await api.patch(`/maintenance-requests/${item.id}/status`, { status: item.status });

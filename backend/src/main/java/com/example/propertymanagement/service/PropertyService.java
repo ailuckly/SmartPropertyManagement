@@ -19,6 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Business facade for CRUD operations on {@link com.example.propertymanagement.model.Property} entities.
+ * Handles role-based access control and ownership checks so controllers can remain declarative.
+ */
 @Service
 public class PropertyService {
 
@@ -30,6 +34,9 @@ public class PropertyService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Retrieves a paginated property list. When {@code ownerId} is provided the list is scoped to that user.
+     */
     @Transactional(readOnly = true)
     public PageResponse<PropertyDto> getProperties(Pageable pageable, Long ownerId) {
         Page<Property> page;
@@ -41,12 +48,18 @@ public class PropertyService {
         return PageResponse.from(page.map(PropertyMapper::toDto));
     }
 
+    /**
+     * Loads a single property DTO and raises a 404 style exception when absent.
+     */
     @Transactional(readOnly = true)
     public PropertyDto getProperty(Long id) {
         Property property = findPropertyOrThrow(id);
         return PropertyMapper.toDto(property);
     }
 
+    /**
+     * Creates a property. Admins can target any owner, whereas owners can only create properties for themselves.
+     */
     @Transactional
     public PropertyDto createProperty(PropertyRequest request) {
         UserPrincipal principal = getAuthenticatedUser();
@@ -75,6 +88,9 @@ public class PropertyService {
         return PropertyMapper.toDto(saved);
     }
 
+    /**
+     * Updates an existing property, enforcing the same ownership / admin checks as {@link #createProperty}.
+     */
     @Transactional
     public PropertyDto updateProperty(Long id, PropertyRequest request) {
         UserPrincipal principal = getAuthenticatedUser();
@@ -106,6 +122,9 @@ public class PropertyService {
         return PropertyMapper.toDto(propertyRepository.save(property));
     }
 
+    /**
+     * Deletes a property after ensuring the caller has rights.
+     */
     @Transactional
     public void deleteProperty(Long id) {
         UserPrincipal principal = getAuthenticatedUser();
@@ -118,11 +137,17 @@ public class PropertyService {
         propertyRepository.delete(property);
     }
 
+    /**
+     * Helper that wraps repository lookups and raises a domain-specific 404 when nothing is found.
+     */
     private Property findPropertyOrThrow(Long id) {
         return propertyRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("未找到指定物业"));
     }
 
+    /**
+     * Ensures the correct owner is associated with the property based on the caller's role context.
+     */
     private User determineOwner(UserPrincipal principal, Long ownerIdFromRequest) {
         if (isAdmin(principal)) {
             if (ownerIdFromRequest == null) {
@@ -140,6 +165,9 @@ public class PropertyService {
             .orElseThrow(() -> new ResourceNotFoundException("未找到当前用户"));
     }
 
+    /**
+     * Resolves the currently authenticated principal; throws when the context is empty.
+     */
     private UserPrincipal getAuthenticatedUser() {
         return SecurityUtils.getCurrentUserPrincipal()
             .orElseThrow(() -> new ForbiddenException("未登录"));

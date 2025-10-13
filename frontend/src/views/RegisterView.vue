@@ -57,6 +57,9 @@ import { reactive, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
+/**
+ * Registration screen. Mirrors the backend validation requirements and logs in the user upon success.
+ */
 const authStore = useAuthStore();
 const router = useRouter();
 

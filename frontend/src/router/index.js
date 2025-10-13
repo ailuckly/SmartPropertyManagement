@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
+/**
+ * Central application router. Each route declares the roles required to access it;
+ * the global guard consults the auth store to enforce those constraints.
+ */
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -54,6 +58,9 @@ const router = createRouter({
   ]
 });
 
+/**
+ * Ensures the user is loaded before navigating and applies guest/auth and role-based route protection.
+ */
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 

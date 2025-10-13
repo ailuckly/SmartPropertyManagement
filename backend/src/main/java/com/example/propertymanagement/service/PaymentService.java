@@ -19,6 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Handles recording and querying payment transactions tied to leases. Access is restricted to administrators,
+ * lease owners and the tenant bound to the lease (for read-only operations).
+ */
 @Service
 public class PaymentService {
 
@@ -30,6 +34,9 @@ public class PaymentService {
         this.leaseRepository = leaseRepository;
     }
 
+    /**
+     * Fetches payment history for a lease while ensuring that the caller has permission to inspect it.
+     */
     @Transactional(readOnly = true)
     public PageResponse<PaymentDto> getPayments(Long leaseId, Pageable pageable) {
         Lease lease = leaseRepository.findById(leaseId)
@@ -42,6 +49,9 @@ public class PaymentService {
         return PageResponse.from(page.map(PaymentMapper::toDto));
     }
 
+    /**
+     * Records a payment against a lease. Only admins or the property owner can register the transaction.
+     */
     @Transactional
     public PaymentDto recordPayment(PaymentRequest request) {
         Lease lease = leaseRepository.findById(request.leaseId())

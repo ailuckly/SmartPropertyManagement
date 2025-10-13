@@ -33,6 +33,9 @@ import { reactive, ref } from 'vue';
 import { useRouter, useRoute, RouterLink } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
+/**
+ * Login form backed by the auth store. Successful login redirects to the original target (when present).
+ */
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();

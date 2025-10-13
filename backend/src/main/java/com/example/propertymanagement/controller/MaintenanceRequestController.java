@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Endpoints for tenant maintenance submissions and owner/admin progress tracking.
+ */
 @RestController
 @RequestMapping("/api/maintenance-requests")
 public class MaintenanceRequestController {
@@ -27,11 +30,17 @@ public class MaintenanceRequestController {
         this.maintenanceRequestService = maintenanceRequestService;
     }
 
+    /**
+     * Lists maintenance requests visible to the caller.
+     */
     @GetMapping
     public ResponseEntity<PageResponse<MaintenanceRequestDto>> listRequests(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(maintenanceRequestService.getRequests(pageable));
     }
 
+    /**
+     * Allows tenants to raise a new maintenance ticket.
+     */
     @PostMapping
     public ResponseEntity<MaintenanceRequestDto> createRequest(
         @Valid @RequestBody MaintenanceRequestCreate request) {
@@ -39,6 +48,9 @@ public class MaintenanceRequestController {
         return ResponseEntity.status(201).body(dto);
     }
 
+    /**
+     * Updates the maintenance status (owner/admin only).
+     */
     @PatchMapping("/{id}/status")
     public ResponseEntity<MaintenanceRequestDto> updateStatus(@PathVariable Long id,
                                                               @Valid @RequestBody MaintenanceStatusUpdate request) {

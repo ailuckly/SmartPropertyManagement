@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia';
 import api from '../api/http';
 
+/**
+ * Global authentication state. Keeps track of the logged-in user and hides API details from components.
+ * The store also restores sessions on refresh and provides helpers for role-based checks.
+ */
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
@@ -18,6 +22,9 @@ export const useAuthStore = defineStore('auth', {
     }
   },
   actions: {
+    /**
+     * Attempts username/password login and stores the returned user profile on success.
+     */
     async login(payload) {
       this.loading = true;
       try {
@@ -29,6 +36,9 @@ export const useAuthStore = defineStore('auth', {
         this.loading = false;
       }
     },
+    /**
+     * Creates a new account and logs in immediately after successful registration.
+     */
     async register(payload) {
       this.loading = true;
       try {
@@ -40,6 +50,9 @@ export const useAuthStore = defineStore('auth', {
         this.loading = false;
       }
     },
+    /**
+     * Bootstrap helper used by the router guard to resume sessions via the /auth/me endpoint.
+     */
     async fetchCurrentUser() {
       try {
         const { data } = await api.get('/auth/me');
@@ -50,6 +63,9 @@ export const useAuthStore = defineStore('auth', {
         this.initialized = true;
       }
     },
+    /**
+     * Clears backend cookies and resets local state. Network failures are swallowed to keep UI consistent.
+     */
     async logout() {
       try {
         await api.post('/auth/logout');

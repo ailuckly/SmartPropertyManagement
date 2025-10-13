@@ -22,6 +22,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Encapsulates lifecycle operations for lease contracts, including creation, updates, retrieval and deletion.
+ * Ownership rules are enforced so that tenants can only view their own contracts while owners / admins manage data.
+ */
 @Service
 public class LeaseService {
 
@@ -37,6 +41,9 @@ public class LeaseService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Returns leases visible to the current user based on their role.
+     */
     @Transactional(readOnly = true)
     public PageResponse<LeaseDto> getLeases(Pageable pageable) {
         UserPrincipal principal = getCurrentUser();
@@ -51,6 +58,9 @@ public class LeaseService {
         return PageResponse.from(page.map(LeaseMapper::toDto));
     }
 
+    /**
+     * Retrieves a lease and ensures the caller has visibility rights.
+     */
     @Transactional(readOnly = true)
     public LeaseDto getLease(Long id) {
         UserPrincipal principal = getCurrentUser();
@@ -66,6 +76,9 @@ public class LeaseService {
         throw new ForbiddenException("无权查看该租约详情");
     }
 
+    /**
+     * Creates a new lease. Owners can only bind their own properties; admins can target any property.
+     */
     @Transactional
     public LeaseDto createLease(LeaseRequest request) {
         UserPrincipal principal = getCurrentUser();
@@ -101,6 +114,9 @@ public class LeaseService {
         return LeaseMapper.toDto(leaseRepository.save(lease));
     }
 
+    /**
+     * Updates an existing lease contract with the same security constraints as creation.
+     */
     @Transactional
     public LeaseDto updateLease(Long id, LeaseRequest request) {
         UserPrincipal principal = getCurrentUser();
@@ -137,6 +153,9 @@ public class LeaseService {
         return LeaseMapper.toDto(leaseRepository.save(lease));
     }
 
+    /**
+     * Removes a lease record and reverts the associated property status back to {@code AVAILABLE}.
+     */
     @Transactional
     public void deleteLease(Long id) {
         UserPrincipal principal = getCurrentUser();

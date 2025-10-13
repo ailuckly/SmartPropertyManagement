@@ -32,6 +32,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
 
+/**
+ * Encapsulates the full authentication life cycle, including registration, login, token refresh and logout.
+ * <p>
+ * The service coordinates persistence, password hashing, JWT issuance and HttpOnly cookie management so that
+ * controllers can stay thin. Every public method is wrapped in a transaction to guarantee that refresh-token
+ * records stay consistent with the cookies returned to the client.
+ */
 @Service
 public class AuthService {
 
@@ -59,6 +66,9 @@ public class AuthService {
         this.jwtProperties = jwtProperties;
     }
 
+    /**
+     * Registers a new user, persists an initial refresh token and returns the authenticated session payload.
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request,
                                  HttpServletRequest httpRequest,
@@ -91,6 +101,9 @@ public class AuthService {
         return new AuthResponse("注册成功", UserMapper.toDto(user));
     }
 
+    /**
+     * Authenticates the supplied credentials, issues fresh tokens and returns the authenticated session payload.
+     */
     @Transactional
     public AuthResponse login(LoginRequest request,
                               HttpServletRequest httpRequest,
@@ -111,6 +124,9 @@ public class AuthService {
         }
     }
 
+    /**
+     * Re-issues a new access token pair when a valid refresh token is presented in the cookies.
+     */
     @Transactional
     public AuthResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshTokenValue = extractRefreshToken(request);
@@ -132,6 +148,9 @@ public class AuthService {
         return new AuthResponse("令牌刷新成功", UserMapper.toDto(user));
     }
 
+    /**
+     * Deletes the refresh token persisted in the database (if any) and clears the authentication cookies.
+     */
     @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         SecurityUtils.getCurrentUserPrincipal().ifPresent(principal ->
@@ -149,6 +168,9 @@ public class AuthService {
         CookieUtils.deleteCookie(response, jwtProperties.getRefreshCookieName(), secure);
     }
 
+    /**
+     * Loads the current user profile for the authenticated principal. Throws when the session is missing or stale.
+     */
     @Transactional(readOnly = true)
     public com.example.propertymanagement.dto.user.UserDto me() {
         UserPrincipal principal = SecurityUtils.getCurrentUserPrincipal()
@@ -158,6 +180,9 @@ public class AuthService {
         return UserMapper.toDto(user);
     }
 
+    /**
+     * Generates fresh JWT + refresh-token pair and synchronises both cookie payload and database record.
+     */
     private void attachTokensToResponse(String username,
                                         User user,
                                         HttpServletRequest request,
@@ -193,6 +218,9 @@ public class AuthService {
         );
     }
 
+    /**
+     * Pulls the refresh token from HttpOnly cookies so that controllers never have to handle cookie parsing logic.
+     */
     private String extractRefreshToken(HttpServletRequest request) {
         if (request.getCookies() == null) {
             return null;
