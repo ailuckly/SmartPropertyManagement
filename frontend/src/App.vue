@@ -20,14 +20,17 @@
 
     <!-- Sidebar for authenticated users -->
     <aside v-if="isAuthenticated" class="sidebar">
-      <div class="section-title">导航</div>
+      <div class="section-title">总览</div>
       <nav class="nav">
-        <RouterLink to="/" class="nav-item">仪表盘</RouterLink>
-        <RouterLink to="/properties" class="nav-item">物业管理</RouterLink>
-        <RouterLink v-if="isTenant" to="/maintenance" class="nav-item">维修申请</RouterLink>
-        <RouterLink v-if="isOwnerOrAdmin" to="/maintenance" class="nav-item">维修工单</RouterLink>
-        <RouterLink to="/leases" class="nav-item">租约</RouterLink>
-        <RouterLink v-if="isOwnerOrAdmin" to="/payments" class="nav-item">收支记录</RouterLink>
+        <RouterLink to="/" class="nav-item"><span class="nav-ico">📊</span>仪表盘</RouterLink>
+      </nav>
+      <div class="section-title">业务</div>
+      <nav class="nav">
+        <RouterLink to="/properties" class="nav-item"><span class="nav-ico">🏢</span>物业管理</RouterLink>
+        <RouterLink v-if="isTenant" to="/maintenance" class="nav-item"><span class="nav-ico">🛠️</span>维修申请</RouterLink>
+        <RouterLink v-if="isOwnerOrAdmin" to="/maintenance" class="nav-item"><span class="nav-ico">🛠️</span>维修工单</RouterLink>
+        <RouterLink to="/leases" class="nav-item"><span class="nav-ico">📄</span>租约</RouterLink>
+        <RouterLink v-if="isOwnerOrAdmin" to="/payments" class="nav-item"><span class="nav-ico">💰</span>收支记录</RouterLink>
       </nav>
     </aside>
 

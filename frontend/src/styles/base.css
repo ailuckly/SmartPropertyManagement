@@ -97,10 +97,17 @@ button:focus-visible,
 }
 
 .sidebar .nav a {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 12px;
   border-radius: 8px;
   color: #cbd5e1;
+}
+
+.sidebar .nav a .nav-ico {
+  width: 18px;
+  text-align: center;
 }
 
 .sidebar .nav a.router-link-active {
