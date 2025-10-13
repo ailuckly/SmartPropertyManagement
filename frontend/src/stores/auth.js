@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import api from '../api/http';
+import { notify } from '../utils/notify';
 
 /**
  * Global authentication state. Keeps track of the logged-in user and hides API details from components.
@@ -31,6 +32,7 @@ export const useAuthStore = defineStore('auth', {
         const { data } = await api.post('/auth/login', payload);
         this.user = data.user;
         this.initialized = true;
+        notify('登录成功', 'success');
         return data;
       } finally {
         this.loading = false;
@@ -45,6 +47,7 @@ export const useAuthStore = defineStore('auth', {
         const { data } = await api.post('/auth/register', payload);
         this.user = data.user;
         this.initialized = true;
+        notify('注册成功，已自动登录', 'success');
         return data;
       } finally {
         this.loading = false;
@@ -69,6 +72,7 @@ export const useAuthStore = defineStore('auth', {
     async logout() {
       try {
         await api.post('/auth/logout');
+        notify('您已退出登录', 'info');
       } catch (error) {
         // ignore network errors during logout
       } finally {

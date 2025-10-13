@@ -44,6 +44,7 @@
         </nav>
         <h1 style="margin:0; font-size:18px;">{{ pageTitle }}</h1>
       </div>
+      <NotifyHost />
       <RouterView />
     </main>
   </div>
@@ -53,6 +54,7 @@
 import { computed } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { useAuthStore } from './stores/auth';
+import NotifyHost from './components/NotifyHost.vue';
 
 const authStore = useAuthStore();
 const route = useRoute();
