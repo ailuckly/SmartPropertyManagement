@@ -4,7 +4,7 @@
     <form @submit.prevent="handleSubmit">
       <div class="form-field">
         <label for="username">用户名</label>
-        <input id="username" v-model="form.username" required placeholder="请输入用户名" />
+        <input id="username" v-model="form.username" required type="text" autocomplete="username" placeholder="请输入用户名" />
       </div>
       <div class="form-field">
         <label for="password">密码</label>
@@ -13,6 +13,7 @@
           v-model="form.password"
           required
           type="password"
+          autocomplete="current-password"
           placeholder="请输入密码"
         />
       </div>

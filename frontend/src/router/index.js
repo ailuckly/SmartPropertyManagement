@@ -64,8 +64,19 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
+  // 仅在访问受保护页面时阻塞等待会话恢复；
+  // 对于登录/注册等 guestOnly 页面，不阻塞导航，避免初次进入时的空白等待
   if (!authStore.initialized) {
-    await authStore.fetchCurrentUser();
+    if (to.meta.requiresAuth) {
+      try {
+        await authStore.fetchCurrentUser();
+      } catch (_) {
+        // 忽略错误，继续根据 isAuthenticated 判定
+      }
+    } else {
+      // 非阻塞预取（不影响导航）
+      authStore.fetchCurrentUser().catch(() => {});
+    }
   }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {

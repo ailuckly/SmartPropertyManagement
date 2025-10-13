@@ -4,11 +4,11 @@
     <form @submit.prevent="handleSubmit">
       <div class="form-field">
         <label for="username">用户名</label>
-        <input id="username" v-model="form.username" required placeholder="3-50个字符" />
+        <input id="username" v-model="form.username" required type="text" autocomplete="username" placeholder="3-50个字符" />
       </div>
       <div class="form-field">
         <label for="email">邮箱</label>
-        <input id="email" v-model="form.email" required type="email" placeholder="name@example.com" />
+        <input id="email" v-model="form.email" required type="email" autocomplete="email" placeholder="name@example.com" />
       </div>
       <div class="form-field">
         <label for="password">密码</label>
@@ -17,27 +17,27 @@
           v-model="form.password"
           required
           type="password"
+          autocomplete="new-password"
           placeholder="至少6个字符"
         />
       </div>
       <div class="form-field">
         <label for="firstName">名字</label>
-        <input id="firstName" v-model="form.firstName" placeholder="可选" />
+        <input id="firstName" v-model="form.firstName" type="text" autocomplete="given-name" placeholder="可选" />
       </div>
       <div class="form-field">
         <label for="lastName">姓氏</label>
-        <input id="lastName" v-model="form.lastName" placeholder="可选" />
+        <input id="lastName" v-model="form.lastName" type="text" autocomplete="family-name" placeholder="可选" />
       </div>
       <div class="form-field">
         <label for="phoneNumber">联系电话</label>
-        <input id="phoneNumber" v-model="form.phoneNumber" placeholder="可选" />
+        <input id="phoneNumber" v-model="form.phoneNumber" type="tel" autocomplete="tel" placeholder="可选" />
       </div>
       <div class="form-field">
         <label for="role">角色</label>
         <select id="role" v-model="form.role">
           <option value="">租户</option>
           <option value="ROLE_OWNER">业主</option>
-          <option value="ROLE_ADMIN">管理员</option>
         </select>
       </div>
       <p v-if="error" class="error-msg">{{ error }}</p>

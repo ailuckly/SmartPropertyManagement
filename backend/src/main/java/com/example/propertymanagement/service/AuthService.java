@@ -86,6 +86,11 @@ public class AuthService {
             throw new BadRequestException("邮箱已被注册");
         }
 
+        // 安全限制：禁止通过公开注册接口创建管理员账号
+        if (request.role() == RoleName.ROLE_ADMIN) {
+            throw new BadRequestException("不允许注册管理员账户");
+        }
+
         RoleName roleName = request.role() != null ? request.role() : RoleName.ROLE_TENANT;
         Role role = roleRepository.findByName(roleName)
             .orElseGet(() -> roleRepository.save(Role.builder().name(roleName).build()));

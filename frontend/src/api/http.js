@@ -11,6 +11,7 @@ const api = axios.create({
 let isRefreshing = false;
 let refreshSubscribers = [];
 
+// 订阅刷新结果：回调接收可选的 error 参数
 const subscribeTokenRefresh = (callback) => {
   refreshSubscribers.push(callback);
 };
@@ -20,35 +21,53 @@ const onRefreshed = () => {
   refreshSubscribers = [];
 };
 
+const onRefreshFailed = (error) => {
+  refreshSubscribers.forEach((callback) => callback(error));
+  refreshSubscribers = [];
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { response, config } = error;
-    if (response?.status === 401 && !config?._retry) {
-      config._retry = true;
+    if (response?.status === 401) {
+      const url = config?.url || '';
 
-      if (!isRefreshing) {
-        isRefreshing = true;
-        try {
-          await api.post('/auth/refresh-token');
-          isRefreshing = false;
-          onRefreshed();
-        } catch (refreshError) {
-          isRefreshing = false;
-          refreshSubscribers = [];
-          throw refreshError;
-        }
+      // 对 /auth/* 的 401 不进行刷新尝试，避免无意义的额外请求
+      if (url.startsWith('/auth/')) {
+        return Promise.reject(error);
       }
 
-      return new Promise((resolve, reject) => {
-        subscribeTokenRefresh(async () => {
+      if (!config?._retry) {
+        config._retry = true;
+
+        if (!isRefreshing) {
+          isRefreshing = true;
           try {
-            resolve(await api(config));
-          } catch (err) {
-            reject(err);
+            await api.post('/auth/refresh-token');
+            onRefreshed();
+          } catch (refreshError) {
+            onRefreshFailed(refreshError);
+            throw refreshError;
+          } finally {
+            isRefreshing = false;
           }
+        }
+
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh(async (refreshError) => {
+            if (refreshError) {
+              // 刷新失败，直接拒绝原请求，避免无限挂起
+              return reject(refreshError);
+            }
+            try {
+              resolve(await api(config));
+            } catch (err) {
+              reject(err);
+            }
+          });
         });
-      });
+      }
     }
 
     return Promise.reject(error);
