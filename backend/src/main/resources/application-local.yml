@@ -1,9 +1,9 @@
-# 本地开发配置，可通过 `--spring.profiles.active=local` 启用
+# Local development profile. Activate with `--spring.profiles.active=local`
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/property_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: your_mysql_username # TODO: 修改为本地 MySQL 用户名
-    password: your_mysql_password # TODO: 修改为本地 MySQL 密码
+    username: your_mysql_username # TODO: replace with local MySQL username
+    password: your_mysql_password # TODO: replace with local MySQL password
   jpa:
     hibernate:
       ddl-auto: update
@@ -21,7 +21,7 @@ server:
 app:
   security:
     jwt:
-      secret: change-me-in-local # TODO: 修改为本地使用的 JWT 密钥
+      secret: change-me-in-local # TODO: replace with local JWT secret
       access-token-expiration-minutes: 30
       refresh-token-expiration-days: 7
     cors:
