@@ -8,8 +8,12 @@
       </div>
       <div class="header-actions">
         <template v-if="isAuthenticated">
-          <span class="welcome">你好，{{ user?.username }}</span>
-          <button class="btn-primary" @click="logout">退出</button>
+          <div class="user-menu" @mouseleave="menuOpen=false">
+            <button class="nav-link" @click="menuOpen=!menuOpen">{{ user?.username }}</button>
+            <div v-if="menuOpen" class="menu">
+              <button @click="logout">退出登录</button>
+            </div>
+          </div>
         </template>
         <template v-else>
           <RouterLink to="/login" class="nav-link">登录</RouterLink>
@@ -64,8 +68,14 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
 const isOwnerOrAdmin = computed(() => authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']));
 const isTenant = computed(() => authStore.hasAnyRole(['ROLE_TENANT']));
 const pageTitle = computed(() => route.meta?.title ?? '');
+const menuOpen = computed({
+  get: () => state.menuOpen,
+  set: (v) => state.menuOpen = v
+});
+const state = reactive({ menuOpen: false });
 
 const logout = () => {
+  state.menuOpen = false;
   authStore.logout();
 };
 </script>
@@ -120,6 +130,28 @@ nav {
   align-items: center;
   gap: 16px;
 }
+
+.user-menu { position: relative; }
+.user-menu .menu {
+  position: absolute;
+  right: 0;
+  top: 36px;
+  background: #fff;
+  color: #0f172a;
+  border-radius: 10px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+}
+.user-menu .menu button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+.user-menu .menu button:hover { background: #f1f5f9; }
 
 .welcome {
   font-size: 14px;
