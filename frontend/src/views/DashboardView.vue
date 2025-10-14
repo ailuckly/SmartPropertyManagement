@@ -168,16 +168,6 @@
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue';
-import { use } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
-import { PieChart, BarChart, LineChart } from 'echarts/charts';
-import {
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-} from 'echarts/components';
-import VChart from 'vue-echarts';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
 import {
@@ -192,18 +182,6 @@ import {
   TrendCharts,
   Calendar
 } from '@element-plus/icons-vue';
-
-// 注册 ECharts 组件
-use([
-  CanvasRenderer,
-  PieChart,
-  BarChart,
-  LineChart,
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-]);
 
 const authStore = useAuthStore();
 const isAdmin = authStore.hasAnyRole(['ROLE_ADMIN']);
