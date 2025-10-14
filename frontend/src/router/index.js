@@ -39,6 +39,12 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: ['ROLE_OWNER', 'ROLE_ADMIN'], title: '收支记录' }
     },
     {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('../views/NotificationsView.vue'),
+      meta: { requiresAuth: true, title: '通知中心' }
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),

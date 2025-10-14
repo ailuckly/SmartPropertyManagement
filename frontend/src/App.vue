@@ -15,6 +15,7 @@
             style="width: 200px"
             clearable
           />
+          <NotificationBell ref="notificationBell" />
           <el-dropdown @command="handleCommand">
             <span class="user-dropdown">
               <el-icon><User /></el-icon>
@@ -107,6 +108,7 @@ import { computed, ref } from 'vue';
 import { RouterView, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 import NotifyHost from './components/NotifyHost.vue';
+import NotificationBell from './components/NotificationBell.vue';
 import {
   Search,
   User,
@@ -126,6 +128,7 @@ const route = useRoute();
 const router = useRouter();
 
 const searchText = ref('');
+const notificationBell = ref(null);
 const user = computed(() => authStore.user);
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const isOwnerOrAdmin = computed(() => authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']));
