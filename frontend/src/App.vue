@@ -8,6 +8,7 @@
       </div>
       <div class="header-actions">
         <template v-if="isAuthenticated">
+          <input class="input" placeholder="搜索（预留）" style="min-width:200px;" />
           <div class="user-menu" @mouseleave="menuOpen=false">
             <button class="nav-link" @click="menuOpen=!menuOpen">{{ user?.username }}</button>
             <div v-if="menuOpen" class="menu">

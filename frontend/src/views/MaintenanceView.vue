@@ -54,7 +54,7 @@
         <table class="table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th class="id-col">ID</th>
               <th>物业</th>
               <th>租客</th>
               <th>描述</th>
@@ -65,7 +65,7 @@
           </thead>
           <tbody>
             <tr v-for="item in requests" :key="item.id">
-              <td>{{ item.id }}</td>
+              <td class="id-col">{{ item.id }}</td>
               <td>
                 <div class="address-cell">
                   <strong>#{{ item.propertyId }}</strong>

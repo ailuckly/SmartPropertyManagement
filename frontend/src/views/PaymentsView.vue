@@ -44,9 +44,9 @@
       <table class="table">
         <thead>
           <tr>
-            <th>ID</th>
+            <th class="id-col">ID</th>
             <th>租约</th>
-            <th>金额</th>
+            <th class="num">金额</th>
             <th>支付日期</th>
             <th>方式</th>
             <th>登记时间</th>
@@ -54,9 +54,9 @@
         </thead>
         <tbody>
           <tr v-for="item in payments" :key="item.id">
-            <td>{{ item.id }}</td>
+            <td class="id-col">{{ item.id }}</td>
             <td>{{ item.leaseId }}</td>
-            <td>{{ item.amount }}</td>
+            <td class="num">{{ item.amount }}</td>
             <td>{{ item.paymentDate }}</td>
             <td>{{ item.paymentMethod ?? '-' }}</td>
             <td>{{ formatDateTime(item.createdAt) }}</td>

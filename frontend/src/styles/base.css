@@ -171,9 +171,24 @@ button:focus-visible,
   border-bottom: 1px solid #e2e8f0;
 }
 
+.table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.table .id-col { width: 72px; }
+
 .table tbody tr:hover {
   background: #f8fafc;
 }
+
+/* Empty states */
+.empty-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 32px;
+  color: #64748b;
+}
+.empty-card .title { font-weight: 600; color: #334155; }
 
 /* Scrollbar (WebKit) */
 *::-webkit-scrollbar { width: 10px; height: 10px; }

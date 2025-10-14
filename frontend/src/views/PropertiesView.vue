@@ -92,10 +92,10 @@
         <table class="table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th class="id-col">ID</th>
               <th>地址</th>
               <th>类型</th>
-              <th>租金</th>
+              <th class="num">租金</th>
               <th>状态</th>
               <th>业主</th>
               <th>操作</th>
@@ -103,7 +103,7 @@
           </thead>
           <tbody>
             <tr v-for="item in properties" :key="item.id">
-              <td>{{ item.id }}</td>
+              <td class="id-col">{{ item.id }}</td>
               <td>
                 <div class="address-cell">
                   <strong>{{ item.address }}</strong>
@@ -111,7 +111,7 @@
                 </div>
               </td>
               <td>{{ renderType(item.propertyType) }}</td>
-              <td>{{ item.rentAmount ?? '-' }}</td>
+              <td class="num">{{ item.rentAmount ?? '-' }}</td>
               <td><span :class="['status-pill', item.status.toLowerCase()]">{{ renderStatus(item.status) }}</span></td>
               <td>{{ item.ownerUsername ?? '-' }}</td>
               <td class="actions">
@@ -122,7 +122,7 @@
           </tbody>
         </table>
       </div>
-      <div v-else class="card" style="padding:12px;">
+      <div v-else class="card empty-card">
         <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
         <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
         <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>

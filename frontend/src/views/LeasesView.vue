@@ -65,18 +65,18 @@
         <table class="table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th class="id-col">ID</th>
               <th>物业</th>
               <th>租户</th>
               <th>租期</th>
-              <th>月租</th>
+              <th class="num">月租</th>
               <th>状态</th>
               <th v-if="isOwnerOrAdmin">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="item in leases" :key="item.id">
-              <td>{{ item.id }}</td>
+              <td class="id-col">{{ item.id }}</td>
               <td>
                 <div class="address-cell">
                   <strong>#{{ item.propertyId }}</strong>
@@ -85,7 +85,7 @@
               </td>
               <td>{{ item.tenantUsername }}</td>
               <td>{{ formatDate(item.startDate) }} ~ {{ formatDate(item.endDate) }}</td>
-              <td>{{ item.rentAmount }}</td>
+              <td class="num">{{ item.rentAmount }}</td>
               <td><span :class="['status-pill', item.status.toLowerCase()]">{{ renderStatus(item.status) }}</span></td>
               <td v-if="isOwnerOrAdmin" class="actions">
                 <button @click="startEdit(item)">编辑</button>
@@ -95,7 +95,7 @@
           </tbody>
         </table>
       </div>
-      <div v-else class="card" style="padding:12px;">
+      <div v-else class="card empty-card">
         <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
         <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
         <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
