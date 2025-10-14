@@ -1,5 +1,5 @@
 <template>
-  <div class="maintenance-layout">
+  <div :class="['maintenance-layout', { 'single-column': !isTenant }]">
     <section v-if="isTenant" class="card form-card">
       <h2>提交维修申请</h2>
       <form @submit.prevent="handleSubmit">
@@ -218,6 +218,11 @@ onMounted(fetchRequests);
   .maintenance-layout {
     grid-template-columns: 1fr;
   }
+}
+
+/* When没有租户提交面板时，列表占满整行 */
+.maintenance-layout.single-column {
+  grid-template-columns: 1fr;
 }
 
 .table-wrapper {
