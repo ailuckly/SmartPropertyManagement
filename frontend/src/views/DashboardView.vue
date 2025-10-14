@@ -50,7 +50,7 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <el-icon><PieChart /></el-icon>
+              <el-icon><DataLine /></el-icon>
               <span>物业状态分布</span>
             </div>
           </template>
@@ -68,7 +68,7 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <el-icon><DataAnalysis /></el-icon>
+              <el-icon><Histogram /></el-icon>
               <span>物业类型分布</span>
             </div>
           </template>
@@ -86,7 +86,7 @@
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
-              <el-icon><Setting /></el-icon>
+              <el-icon><Tools /></el-icon>
               <span>维修请求统计</span>
             </div>
           </template>
@@ -176,9 +176,8 @@ import {
   Tools,
   User,
   InfoFilled,
-  PieChart as PieChartIcon,
-  DataAnalysis,
-  Setting,
+  DataLine,
+  Histogram,
   TrendCharts,
   Calendar
 } from '@element-plus/icons-vue';
