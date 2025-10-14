@@ -11,6 +11,7 @@
       :accept="accept"
       :multiple="multiple"
       :limit="limit"
+      :with-credentials="true"
       :before-upload="handleBeforeUpload"
       :on-success="handleSuccess"
       :on-error="handleError"
@@ -133,11 +134,21 @@ const uploadUrl = computed(() => {
 
 // 上传请求头（携带认证token）
 const uploadHeaders = computed(() => {
-  const token = localStorage.getItem('ACCESS_TOKEN')
-  return {
-    // 注意：multipart/form-data 不需要手动设置 Content-Type
-    // Authorization 会在 axios 拦截器中自动添加
+  // el-upload 不会使用axios拦截器，需要手动添加Cookie
+  const headers = {}
+  
+  // 从 document.cookie 中提取 ACCESS_TOKEN
+  const cookies = document.cookie.split('; ')
+  const accessTokenCookie = cookies.find(row => row.startsWith('ACCESS_TOKEN='))
+  
+  if (accessTokenCookie) {
+    // 直接设置Cookie头，让后端能够识别
+    const token = accessTokenCookie.split('=')[1]
+    headers['Cookie'] = `ACCESS_TOKEN=${token}`
   }
+  
+  console.log('[FileUpload] Upload headers:', headers)
+  return headers
 })
 
 // 上传额外数据
