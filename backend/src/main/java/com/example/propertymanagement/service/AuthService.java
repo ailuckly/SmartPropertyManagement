@@ -9,7 +9,6 @@ import com.example.propertymanagement.exception.UnauthorizedException;
 import com.example.propertymanagement.mapper.UserMapper;
 import com.example.propertymanagement.model.RefreshToken;
 import com.example.propertymanagement.model.Role;
-import com.example.propertymanagement.model.RoleName;
 import com.example.propertymanagement.model.User;
 import com.example.propertymanagement.repository.RefreshTokenRepository;
 import com.example.propertymanagement.repository.RoleRepository;
@@ -87,13 +86,13 @@ public class AuthService {
         }
 
         // 安全限制：公开注册仅允许创建租户账户
-        if (request.role() != null && request.role() != RoleName.ROLE_TENANT) {
+        if (request.role() != null && !"ROLE_TENANT".equals(request.role())) {
             throw new BadRequestException("公开注册仅支持租户账号，请联系管理员创建其它角色");
         }
 
-        RoleName roleName = RoleName.ROLE_TENANT;
+        String roleName = "ROLE_TENANT";
         Role role = roleRepository.findByName(roleName)
-            .orElseGet(() -> roleRepository.save(Role.builder().name(roleName).build()));
+            .orElseGet(() -> roleRepository.save(Role.builder().name(roleName).isDeleted(0).build()));
 
         User user = User.builder()
             .username(request.username())
@@ -159,7 +158,7 @@ public class AuthService {
         RefreshToken storedToken = refreshTokenRepository.findByToken(refreshTokenValue)
             .orElseThrow(() -> new UnauthorizedException("刷新令牌无效"));
 
-        if (storedToken.getExpiryDate().isBefore(Instant.now())) {
+        if (storedToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
             refreshTokenRepository.deleteById(storedToken.getId());
             throw new UnauthorizedException("刷新令牌已过期");
         }
@@ -230,7 +229,7 @@ public class AuthService {
         RefreshToken refreshToken = RefreshToken.builder()
             .user(user)
             .token(refreshTokenValue)
-            .expiryDate(refreshExpiry)
+            .expiryDate(java.time.LocalDateTime.ofInstant(refreshExpiry, java.time.ZoneOffset.UTC))
             .build();
         refreshTokenRepository.save(refreshToken);
 

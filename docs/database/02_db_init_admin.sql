@@ -24,9 +24,9 @@ ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
 -- 2. 创建默认管理员账户
 -- ============================================================
 -- 密码：admin123（BCrypt加密后）
--- 加密值：$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhka
+-- 加密值：$2a$10$qo06sIjgT3TtGKjop/KVOefbQKDxaxl7d7RhfB70UEAWuYKS9BBn.
 INSERT INTO `user` (`username`, `email`, `password`, `first_name`, `last_name`, `phone_number`)
-VALUES ('admin', 'admin@smartproperty.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhka', 'System', 'Admin', '400-8888-8888')
+VALUES ('admin', 'admin@smartproperty.com', '$2a$10$qo06sIjgT3TtGKjop/KVOefbQKDxaxl7d7RhfB70UEAWuYKS9BBn.', 'System', 'Admin', '400-8888-8888')
 ON DUPLICATE KEY UPDATE `email` = VALUES(`email`);
 
 -- ============================================================
