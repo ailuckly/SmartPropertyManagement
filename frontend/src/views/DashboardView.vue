@@ -1,7 +1,31 @@
 <template>
   <div class="dashboard">
+    <!-- 欢迎区域 -->
+    <el-card class="welcome-card" shadow="never">
+      <div class="welcome-content">
+        <div class="welcome-text">
+          <h2>欢迎回来，{{ userName }} <el-tag :type="roleTagType" size="small">{{ roleText }}</el-tag></h2>
+          <p class="welcome-desc">{{ welcomeMessage }}</p>
+        </div>
+        <div class="quick-actions">
+          <template v-if="isAdmin">
+            <el-button type="primary" :icon="OfficeBuilding" @click="$router.push('/properties')">管理物业</el-button>
+            <el-button type="success" :icon="User" @click="$router.push('/users')">用户管理</el-button>
+          </template>
+          <template v-else-if="isOwner">
+            <el-button type="primary" :icon="OfficeBuilding" @click="$router.push('/properties')">我的物业</el-button>
+            <el-button type="success" :icon="Document" @click="$router.push('/leases')">租约管理</el-button>
+          </template>
+          <template v-else-if="isTenant">
+            <el-button type="primary" :icon="OfficeBuilding" @click="$router.push('/properties')">浏览物业</el-button>
+            <el-button type="warning" :icon="Tools" @click="$router.push('/maintenance')">维修申请</el-button>
+          </template>
+        </div>
+      </div>
+    </el-card>
+
     <!-- 顶部统计卡片 -->
-    <el-row :gutter="20" v-loading="loading.overview">
+    <el-row :gutter="20" v-loading="loading.overview" style="margin-top: 20px">
       <el-col :xs="24" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card">
           <el-statistic :title="isAdmin ? '总物业数' : '我的物业'" :value="stats.totalProperties || 0">
@@ -167,7 +191,8 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
 import {
@@ -183,8 +208,39 @@ import {
 } from '@element-plus/icons-vue';
 
 const authStore = useAuthStore();
+const router = useRouter();
 const isAdmin = authStore.hasAnyRole(['ROLE_ADMIN']);
+const isOwner = authStore.hasAnyRole(['ROLE_OWNER']);
+const isTenant = authStore.hasAnyRole(['ROLE_TENANT']);
 const isOwnerOrAdmin = authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']);
+
+// 用户信息
+const userName = computed(() => authStore.user?.username || '用户');
+const roleText = computed(() => {
+  if (isAdmin) return '管理员';
+  if (isOwner) return '业主';
+  if (isTenant) return '租户';
+  return '用户';
+});
+const roleTagType = computed(() => {
+  if (isAdmin) return 'danger';
+  if (isOwner) return 'success';
+  if (isTenant) return 'primary';
+  return 'info';
+});
+const welcomeMessage = computed(() => {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好';
+  
+  if (isAdmin) {
+    return `${greeting}！今天系统运行正常，有 ${stats.pendingMaintenances} 个待处理的维修请求。`;
+  } else if (isOwner) {
+    return `${greeting}！您有 ${stats.totalProperties} 个物业，${stats.totalLeases} 个租约在管。`;
+  } else if (isTenant) {
+    return `${greeting}！希望您在这里生活愉快。`;
+  }
+  return `${greeting}！`;
+});
 
 // 统计数据
 const stats = reactive({
@@ -519,6 +575,61 @@ onMounted(() => {
 <style scoped>
 .dashboard {
   padding: 0;
+}
+
+.welcome-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-bottom: 20px;
+}
+
+.welcome-card :deep(.el-card__body) {
+  padding: 24px 32px;
+}
+
+.welcome-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.welcome-text h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.welcome-desc {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .welcome-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .quick-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .quick-actions .el-button {
+    width: 100%;
+  }
 }
 
 .stat-card {

@@ -53,6 +53,7 @@
           text-color="#303133"
           active-text-color="#409EFF"
         >
+          <!-- 通用菜单 -->
           <el-menu-item index="/">
             <el-icon><DataLine /></el-icon>
             <span>仪表盘</span>
@@ -60,30 +61,68 @@
           
           <el-divider style="margin: 8px 0" />
           
-          <el-menu-item index="/properties">
-            <el-icon><OfficeBuilding /></el-icon>
-            <span>物业管理</span>
-          </el-menu-item>
+          <!-- 管理员菜单 -->
+          <template v-if="isAdmin">
+            <div class="menu-group-title">系统管理</div>
+            <el-menu-item index="/properties">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>物业管理</span>
+            </el-menu-item>
+            <el-menu-item index="/leases">
+              <el-icon><Document /></el-icon>
+              <span>租约管理</span>
+            </el-menu-item>
+            <el-menu-item index="/maintenance">
+              <el-icon><Tools /></el-icon>
+              <span>维修管理</span>
+            </el-menu-item>
+            <el-menu-item index="/payments">
+              <el-icon><Wallet /></el-icon>
+              <span>财务管理</span>
+            </el-menu-item>
+            <el-menu-item index="/users">
+              <el-icon><User /></el-icon>
+              <span>用户管理</span>
+            </el-menu-item>
+          </template>
           
-          <el-menu-item v-if="isTenant" index="/maintenance">
-            <el-icon><Tools /></el-icon>
-            <span>维修申请</span>
-          </el-menu-item>
+          <!-- 业主菜单 -->
+          <template v-else-if="isOwner">
+            <div class="menu-group-title">物业运营</div>
+            <el-menu-item index="/properties">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>我的物业</span>
+            </el-menu-item>
+            <el-menu-item index="/leases">
+              <el-icon><Document /></el-icon>
+              <span>租约管理</span>
+            </el-menu-item>
+            <el-menu-item index="/maintenance">
+              <el-icon><Tools /></el-icon>
+              <span>维修工单</span>
+            </el-menu-item>
+            <el-menu-item index="/payments">
+              <el-icon><Wallet /></el-icon>
+              <span>收入记录</span>
+            </el-menu-item>
+          </template>
           
-          <el-menu-item v-if="isOwnerOrAdmin" index="/maintenance">
-            <el-icon><Tools /></el-icon>
-            <span>维修工单</span>
-          </el-menu-item>
-          
-          <el-menu-item index="/leases">
-            <el-icon><Document /></el-icon>
-            <span>租约</span>
-          </el-menu-item>
-          
-          <el-menu-item v-if="isOwnerOrAdmin" index="/payments">
-            <el-icon><Wallet /></el-icon>
-            <span>收支记录</span>
-          </el-menu-item>
+          <!-- 租户菜单 -->
+          <template v-else-if="isTenant">
+            <div class="menu-group-title">租房服务</div>
+            <el-menu-item index="/properties">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>浏览物业</span>
+            </el-menu-item>
+            <el-menu-item index="/leases">
+              <el-icon><Document /></el-icon>
+              <span>我的租约</span>
+            </el-menu-item>
+            <el-menu-item index="/maintenance">
+              <el-icon><Tools /></el-icon>
+              <span>维修申请</span>
+            </el-menu-item>
+          </template>
         </el-menu>
       </el-aside>
 
@@ -131,8 +170,10 @@ const searchText = ref('');
 const notificationBell = ref(null);
 const user = computed(() => authStore.user);
 const isAuthenticated = computed(() => authStore.isAuthenticated);
-const isOwnerOrAdmin = computed(() => authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']));
+const isAdmin = computed(() => authStore.hasAnyRole(['ROLE_ADMIN']));
+const isOwner = computed(() => authStore.hasAnyRole(['ROLE_OWNER']));
 const isTenant = computed(() => authStore.hasAnyRole(['ROLE_TENANT']));
+const isOwnerOrAdmin = computed(() => authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']));
 const pageTitle = computed(() => route.meta?.title ?? '');
 const activeMenu = computed(() => route.path);
 
@@ -234,5 +275,14 @@ const handleCommand = (command) => {
 
 :deep(.el-menu-item.is-active) {
   background-color: #ecf5ff;
+}
+
+.menu-group-title {
+  padding: 12px 20px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #909399;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 </style>
