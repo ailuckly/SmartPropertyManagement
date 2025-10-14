@@ -79,7 +79,6 @@ const logout = () => {
   state.menuOpen = false;
   authStore.logout();
 };
-};
 </script>
 
 <style scoped>
