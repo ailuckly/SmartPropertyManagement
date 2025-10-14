@@ -25,7 +25,18 @@
     <section class="card">
       <header class="table-header">
         <h2>维修请求列表</h2>
-        <div class="pagination">
+        <div class="filters">
+          <select v-model="filters.status">
+            <option value="">所有状态</option>
+            <option value="PENDING">待处理</option>
+            <option value="IN_PROGRESS">处理中</option>
+            <option value="COMPLETED">已完成</option>
+            <option value="CANCELLED">已取消</option>
+          </select>
+          <input v-model.number="filters.propertyId" type="number" min="1" placeholder="物业ID" />
+          <button class="btn-primary" @click="applyFilters">筛选</button>
+          <button class="link-btn" @click="clearFilters">清空</button>
+          <div class="pagination">
           <button :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">
             上一页
           </button>
@@ -38,7 +49,7 @@
           </button>
         </div>
       </header>
-      <div class="table-wrapper">
+      <div class="table-wrapper" v-if="!loading">
         <table class="table">
           <thead>
             <tr>
@@ -78,6 +89,12 @@
           </tbody>
         </table>
       </div>
+      <div v-else class="card" style="padding:12px;">
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px;"></div>
+      </div>
     </section>
   </div>
 </template>
@@ -101,6 +118,8 @@ const form = reactive({
 });
 
 const requests = ref([]); // 表格行数据
+const loading = ref(false);
+const filters = reactive({ status: '', propertyId: '' });
 const pagination = reactive({
   page: 0,
   size: 10,
@@ -113,11 +132,16 @@ const error = ref('');
  * Retrieves maintenance requests appropriate for the logged-in user.
  */
 const fetchRequests = async () => {
-  const { data } = await api.get('/maintenance-requests', {
-    params: { page: pagination.page, size: pagination.size }
-  });
-  requests.value = data.content;
-  pagination.totalPages = Math.max(data.totalPages, 1);
+  loading.value = true;
+  try {
+    const { data } = await api.get('/maintenance-requests', {
+      params: { page: pagination.page, size: pagination.size, status: filters.status || undefined, propertyId: filters.propertyId || undefined }
+    });
+    requests.value = data.content;
+    pagination.totalPages = Math.max(data.totalPages, 1);
+  } finally {
+    loading.value = false;
+  }
 };
 
 /**
@@ -147,6 +171,9 @@ const updateStatus = async (item) => {
     fetchRequests();
   }
 };
+
+const applyFilters = () => { pagination.page = 0; fetchRequests(); };
+const clearFilters = () => { filters.status=''; filters.propertyId=''; pagination.page = 0; fetchRequests(); };
 
 const changePage = (page) => {
   pagination.page = page;

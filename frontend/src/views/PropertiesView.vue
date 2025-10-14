@@ -71,20 +71,16 @@
     <section class="card">
       <header class="table-header">
         <h2>物业列表</h2>
-        <div class="pagination">
-          <button :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">
-            上一页
-          </button>
-          <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
-          <button
-            :disabled="pagination.page + 1 >= pagination.totalPages"
-            @click="changePage(pagination.page + 1)"
-          >
-            下一页
-          </button>
-        </div>
-      </header>
-      <div class="table-wrapper">
+        <div class="filters">
+          <input v-model="filters.city" placeholder="城市" />
+          <select v-model="filters.status">
+            <option value="">所有状态</option>
+            <option value="AVAILABLE">可出租</option>
+            <option value="LEASED">已出租</option>
+            <option value="UNDER_MAINTENANCE">维护中</option>
+          </select>
+          <button class="btn-primary" @click="applyFilters">筛选</button>
+          <button class="link-btn"      <div class="table-wrapper" v-if="!loading">
         <table class="table">
           <thead>
             <tr>
@@ -118,6 +114,13 @@
           </tbody>
         </table>
       </div>
+      <div v-else class="card" style="padding:12px;">
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px;"></div>
+      </div>
     </section>
   </div>
 </template>
@@ -133,6 +136,8 @@ import { useAuthStore } from '../stores/auth';
  */
 const authStore = useAuthStore();
 const properties = ref([]); // 表格数据源
+const loading = ref(false);
+const filters = reactive({ city: '', status: '' });
 const pagination = reactive({
   page: 0,
   size: 10,
@@ -162,11 +167,16 @@ const isAdmin = authStore.hasAnyRole(['ROLE_ADMIN']);
  * Loads a page of properties from the backend. Pagination metadata is reused for the navigation controls.
  */
 const fetchProperties = async () => {
-  const { data } = await api.get('/properties', {
-    params: { page: pagination.page, size: pagination.size }
-  });
-  properties.value = data.content;
-  pagination.totalPages = Math.max(data.totalPages, 1);
+  loading.value = true;
+  try {
+    const { data } = await api.get('/properties', {
+      params: { page: pagination.page, size: pagination.size, city: filters.city || undefined, status: filters.status || undefined }
+    });
+    properties.value = data.content;
+    pagination.totalPages = Math.max(data.totalPages, 1);
+  } finally {
+    loading.value = false;
+  }
 };
 
 /**
@@ -282,6 +292,9 @@ const renderStatus = (status) => {
   }
 };
 
+const applyFilters = () => { pagination.page = 0; fetchProperties(); };
+const clearFilters = () => { filters.city = ''; filters.status = ''; pagination.page = 0; fetchProperties(); };
+
 onMounted(() => {
   if (!isAdmin && authStore.user) {
     form.ownerId = authStore.user.id;
@@ -350,6 +363,7 @@ onMounted(() => {
   margin-top: 12px;
 }
 
+.filters { display:flex; flex-wrap: wrap; gap: 8px; align-items:center; }
 .table-header {
   display: flex;
   justify-content: space-between;

@@ -151,6 +151,7 @@ const formatDateTime = (value) => {
   gap: 24px;
 }
 
+.filters { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .header {
   display: flex;
   justify-content: space-between;

@@ -44,17 +44,21 @@
     <section class="card">
       <header class="table-header">
         <h2>租约列表</h2>
-        <div class="pagination">
-          <button :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">
-            上一页
-          </button>
-          <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
-          <button
-            :disabled="pagination.page + 1 >= pagination.totalPages"
-            @click="changePage(pagination.page + 1)"
-          >
-            下一页
-          </button>
+        <div class="filters">
+          <select v-model="filters.status">
+            <option value="">所有状态</option>
+            <option value="ACTIVE">生效中</option>
+            <option value="EXPIRED">已到期</option>
+            <option value="TERMINATED">已终止</option>
+          </select>
+          <input v-model.number="filters.propertyId" type="number" min="1" placeholder="物业ID" />
+          <button class="btn-primary" @click="applyFilters">筛选</button>
+          <button class="link-btn" @click="clearFilters">清空</button>
+          <div class="pagination">
+            <button :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">上一页</button>
+            <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
+            <button :disabled="pagination.page + 1 >= pagination.totalPages" @click="changePage(pagination.page + 1)">下一页</button>
+          </div>
         </div>
       </header>
       <div class="table-wrapper">
@@ -116,6 +120,8 @@ const form = reactive({
 });
 
 const leases = ref([]); // 租约表格
+const loading = ref(false);
+const filters = reactive({ status: '', propertyId: '' });
 const pagination = reactive({
   page: 0,
   size: 10,
@@ -129,11 +135,21 @@ const error = ref('');
  * Loads leases visible to the current user and updates pagination metadata.
  */
 const fetchLeases = async () => {
-  const { data } = await api.get('/leases', {
-    params: { page: pagination.page, size: pagination.size }
-  });
-  leases.value = data.content;
-  pagination.totalPages = Math.max(data.totalPages, 1);
+  loading.value = true;
+  try {
+    const { data } = await api.get('/leases', {
+      params: {
+        page: pagination.page,
+        size: pagination.size,
+        status: filters.status || undefined,
+        propertyId: filters.propertyId || undefined
+      }
+    });
+    leases.value = data.content;
+    pagination.totalPages = Math.max(data.totalPages, 1);
+  } finally {
+    loading.value = false;
+  }
 };
 
 /**
@@ -213,6 +229,9 @@ const formatDate = (value) => {
   if (!value) return '-';
   return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' }).format(new Date(value));
 };
+
+const applyFilters = () => { pagination.page = 0; fetchLeases(); };
+const clearFilters = () => { filters.status=''; filters.propertyId=''; pagination.page = 0; fetchLeases(); };
 
 onMounted(fetchLeases);
 </script>
