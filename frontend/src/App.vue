@@ -55,10 +55,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, reactive } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { useAuthStore } from './stores/auth';
-import NotifyHost from './components/NotifyHost.vue';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -68,15 +67,18 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
 const isOwnerOrAdmin = computed(() => authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']));
 const isTenant = computed(() => authStore.hasAnyRole(['ROLE_TENANT']));
 const pageTitle = computed(() => route.meta?.title ?? '');
+
+// state first, then computed getter/setter bound to it
+const state = reactive({ menuOpen: false });
 const menuOpen = computed({
   get: () => state.menuOpen,
-  set: (v) => state.menuOpen = v
+  set: (v) => (state.menuOpen = v)
 });
-const state = reactive({ menuOpen: false });
 
 const logout = () => {
   state.menuOpen = false;
   authStore.logout();
+};
 };
 </script>
 
