@@ -578,9 +578,8 @@ onMounted(() => {
 }
 
 .welcome-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
   margin-bottom: 20px;
+  border: 1px solid #e4e7ed;
 }
 
 .welcome-card :deep(.el-card__body) {
@@ -596,8 +595,9 @@ onMounted(() => {
 
 .welcome-text h2 {
   margin: 0 0 8px 0;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
+  color: #303133;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -606,7 +606,7 @@ onMounted(() => {
 .welcome-desc {
   margin: 0;
   font-size: 14px;
-  opacity: 0.9;
+  color: #606266;
   line-height: 1.6;
 }
 
@@ -614,6 +614,10 @@ onMounted(() => {
   display: flex;
   gap: 12px;
   flex-shrink: 0;
+}
+
+.quick-actions .el-button {
+  border-radius: 4px;
 }
 
 @media (max-width: 768px) {
