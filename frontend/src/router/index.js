@@ -45,6 +45,12 @@ const router = createRouter({
       meta: { requiresAuth: true, title: '通知中心' }
     },
     {
+      path: '/file-upload-test',
+      name: 'file-upload-test',
+      component: () => import('../views/FileUploadTest.vue'),
+      meta: { requiresAuth: true, title: '文件上传测试' }
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),
