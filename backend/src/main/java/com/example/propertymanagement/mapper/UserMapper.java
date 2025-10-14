@@ -3,6 +3,7 @@ package com.example.propertymanagement.mapper;
 import com.example.propertymanagement.dto.user.UserDto;
 import com.example.propertymanagement.model.User;
 
+import java.time.ZoneOffset;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,7 +14,7 @@ public final class UserMapper {
 
     public static UserDto toDto(User user) {
         Set<String> roles = user.getRoles().stream()
-            .map(role -> role.getName().name())
+            .map(role -> role.getName())
             .collect(Collectors.toSet());
         return new UserDto(
             user.getId(),
@@ -23,7 +24,7 @@ public final class UserMapper {
             user.getLastName(),
             user.getPhoneNumber(),
             roles,
-            user.getCreatedAt()
+            user.getGmtCreate().toInstant(ZoneOffset.UTC)
         );
     }
 }

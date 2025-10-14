@@ -112,7 +112,7 @@ public class MaintenanceRequestService {
 
         maintenanceRequest.setStatus(request.status());
         if (request.status() == MaintenanceStatus.COMPLETED) {
-            maintenanceRequest.setCompletedAt(Instant.now());
+            maintenanceRequest.setCompletedAt(java.time.LocalDateTime.now());
         } else {
             maintenanceRequest.setCompletedAt(null);
         }

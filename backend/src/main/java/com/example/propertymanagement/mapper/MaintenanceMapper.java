@@ -3,6 +3,8 @@ package com.example.propertymanagement.mapper;
 import com.example.propertymanagement.dto.maintenance.MaintenanceRequestDto;
 import com.example.propertymanagement.model.MaintenanceRequest;
 
+import java.time.ZoneOffset;
+
 public final class MaintenanceMapper {
 
     private MaintenanceMapper() {
@@ -17,8 +19,8 @@ public final class MaintenanceMapper {
             request.getTenant() != null ? request.getTenant().getUsername() : null,
             request.getDescription(),
             request.getStatus(),
-            request.getReportedAt(),
-            request.getCompletedAt()
+            request.getReportedAt() != null ? request.getReportedAt().toInstant(ZoneOffset.UTC) : null,
+            request.getCompletedAt() != null ? request.getCompletedAt().toInstant(ZoneOffset.UTC) : null
         );
     }
 }

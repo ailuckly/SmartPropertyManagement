@@ -3,6 +3,8 @@ package com.example.propertymanagement.mapper;
 import com.example.propertymanagement.dto.property.PropertyDto;
 import com.example.propertymanagement.model.Property;
 
+import java.time.ZoneOffset;
+
 public final class PropertyMapper {
 
     private PropertyMapper() {
@@ -23,7 +25,7 @@ public final class PropertyMapper {
             property.getSquareFootage(),
             property.getStatus(),
             property.getRentAmount(),
-            property.getCreatedAt()
+            property.getGmtCreate().toInstant(ZoneOffset.UTC)
         );
     }
 }
