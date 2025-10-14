@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -38,4 +40,16 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
     
     @EntityGraph(attributePaths = {"property", "tenant"})
     List<Lease> findTop5ByTenantIdOrderByIdDesc(Long tenantId);
+    
+    /**
+     * 搜索租约（支持租户姓名、物业地址关键词搜索）
+     * @param keyword 搜索关键词
+     * @param pageable 分页参数
+     * @return 匹配的租约列表
+     */
+    @EntityGraph(attributePaths = {"property", "property.owner", "tenant"})
+    @Query("SELECT l FROM Lease l JOIN l.property p JOIN l.tenant t " +
+           "WHERE LOWER(t.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(p.address) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<Lease> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

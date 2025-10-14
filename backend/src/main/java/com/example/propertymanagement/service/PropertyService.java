@@ -55,6 +55,29 @@ public class PropertyService {
         }
         return PageResponse.from(page.map(PropertyMapper::toDto));
     }
+    
+    /**
+     * 搜索物业列表（支持关键词搜索）
+     *
+     * @param pageable 分页参数
+     * @param ownerId  业主 ID，可为 null
+     * @param keyword  搜索关键词
+     * @return 包含分页元数据的 {@link PageResponse}
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<PropertyDto> searchProperties(Pageable pageable, Long ownerId, String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getProperties(pageable, ownerId);
+        }
+        
+        Page<Property> page;
+        if (ownerId != null) {
+            page = propertyRepository.searchByOwnerIdAndKeyword(ownerId, keyword.trim(), pageable);
+        } else {
+            page = propertyRepository.searchByKeyword(keyword.trim(), pageable);
+        }
+        return PageResponse.from(page.map(PropertyMapper::toDto));
+    }
 
     /**
      * 根据 ID 获取物业详情。

@@ -8,6 +8,7 @@ import com.example.propertymanagement.exception.ResourceNotFoundException;
 import com.example.propertymanagement.mapper.LeaseMapper;
 import com.example.propertymanagement.model.Lease;
 import com.example.propertymanagement.model.LeaseStatus;
+import com.example.propertymanagement.model.NotificationType;
 import com.example.propertymanagement.model.Property;
 import com.example.propertymanagement.model.PropertyStatus;
 import com.example.propertymanagement.model.RoleName;
@@ -31,13 +32,16 @@ public class LeaseService {
     private final LeaseRepository leaseRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public LeaseService(LeaseRepository leaseRepository,
                         PropertyRepository propertyRepository,
-                        UserRepository userRepository) {
+                        UserRepository userRepository,
+                        NotificationService notificationService) {
         this.leaseRepository = leaseRepository;
         this.propertyRepository = propertyRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -57,6 +61,23 @@ public class LeaseService {
         } else {
             page = leaseRepository.findAllByTenantId(principal.getId(), pageable);
         }
+        return PageResponse.from(page.map(LeaseMapper::toDto));
+    }
+    
+    /**
+     * 搜索租约（支持关键词搜索）
+     *
+     * @param pageable 分页参数
+     * @param keyword 搜索关键词
+     * @return 租约分页结果
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<LeaseDto> searchLeases(Pageable pageable, String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getLeases(pageable);
+        }
+        
+        Page<Lease> page = leaseRepository.searchByKeyword(keyword.trim(), pageable);
         return PageResponse.from(page.map(LeaseMapper::toDto));
     }
 
@@ -120,7 +141,26 @@ public class LeaseService {
 
         property.setStatus(PropertyStatus.LEASED);
 
-        return LeaseMapper.toDto(leaseRepository.save(lease));
+        Lease savedLease = leaseRepository.save(lease);
+        
+        // 发送通知给租户
+        try {
+            notificationService.createNotification(
+                NotificationType.LEASE_CREATED,
+                "租约已创建",
+                String.format("您的租约已创建成功，物业地址：%s，租期：%s 至 %s",
+                    property.getAddress(),
+                    request.startDate(),
+                    request.endDate()),
+                tenant.getId(),
+                "lease",
+                savedLease.getId()
+            );
+        } catch (Exception e) {
+            // 通知发送失败不影响主流程
+        }
+
+        return LeaseMapper.toDto(savedLease);
     }
 
     /**

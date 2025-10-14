@@ -92,6 +92,76 @@ public class MaintenanceRequestService {
         }
         return PageResponse.from(page.map(MaintenanceMapper::toDto));
     }
+    
+    /**
+     * 分页获取工单列表（支持状态和物业ID筛选）
+     *
+     * @param pageable 分页参数
+     * @param status 状态筛选（可选）
+     * @param propertyId 物业ID筛选（可选）
+     * @return 包含分页元数据的工单列表
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<MaintenanceRequestDto> getRequestsWithFilters(Pageable pageable, 
+                                                                       MaintenanceStatus status, 
+                                                                       Long propertyId) {
+        UserPrincipal principal = getCurrentUser();
+        Page<MaintenanceRequest> page;
+        
+        // 根据角色和筛选条件执行不同的查询
+        if (isAdmin(principal)) {
+            if (status != null && propertyId != null) {
+                page = maintenanceRequestRepository.findAllByStatusAndPropertyId(status, propertyId, pageable);
+            } else if (status != null) {
+                page = maintenanceRequestRepository.findAllByStatus(status, pageable);
+            } else if (propertyId != null) {
+                page = maintenanceRequestRepository.findAllByPropertyId(propertyId, pageable);
+            } else {
+                page = maintenanceRequestRepository.findAll(pageable);
+            }
+        } else if (isOwner(principal)) {
+            Long ownerId = principal.getId();
+            if (status != null && propertyId != null) {
+                page = maintenanceRequestRepository.findAllByPropertyOwnerIdAndStatusAndPropertyId(ownerId, status, propertyId, pageable);
+            } else if (status != null) {
+                page = maintenanceRequestRepository.findAllByPropertyOwnerIdAndStatus(ownerId, status, pageable);
+            } else if (propertyId != null) {
+                page = maintenanceRequestRepository.findAllByPropertyOwnerIdAndPropertyId(ownerId, propertyId, pageable);
+            } else {
+                page = maintenanceRequestRepository.findAllByPropertyOwnerId(ownerId, pageable);
+            }
+        } else {
+            Long tenantId = principal.getId();
+            if (status != null && propertyId != null) {
+                page = maintenanceRequestRepository.findAllByTenantIdAndStatusAndPropertyId(tenantId, status, propertyId, pageable);
+            } else if (status != null) {
+                page = maintenanceRequestRepository.findAllByTenantIdAndStatus(tenantId, status, pageable);
+            } else if (propertyId != null) {
+                page = maintenanceRequestRepository.findAllByTenantIdAndPropertyId(tenantId, propertyId, pageable);
+            } else {
+                page = maintenanceRequestRepository.findAllByTenantId(tenantId, pageable);
+            }
+        }
+        
+        return PageResponse.from(page.map(MaintenanceMapper::toDto));
+    }
+    
+    /**
+     * 搜索维修请求（支持关键词搜索）
+     *
+     * @param pageable 分页参数
+     * @param keyword 搜索关键词
+     * @return 维修请求分页结果
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<MaintenanceRequestDto> searchRequests(Pageable pageable, String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getRequests(pageable);
+        }
+        
+        Page<MaintenanceRequest> page = maintenanceRequestRepository.searchByKeyword(keyword.trim(), pageable);
+        return PageResponse.from(page.map(MaintenanceMapper::toDto));
+    }
 
     /**
      * 更新工单状态，仅管理员与业主可执行。
@@ -135,5 +205,14 @@ public class MaintenanceRequestService {
 
     private boolean isTenant(UserPrincipal principal) {
         return SecurityUtils.hasRole(principal, RoleName.ROLE_TENANT.name());
+    }
+    
+    private String getStatusText(MaintenanceStatus status) {
+        return switch (status) {
+            case PENDING -> "待处理";
+            case IN_PROGRESS -> "处理中";
+            case COMPLETED -> "已完成";
+            case CANCELLED -> "已取消";
+        };
     }
 }

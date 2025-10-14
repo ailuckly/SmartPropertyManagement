@@ -5,15 +5,28 @@
       <template #header>
         <div class="card-header">
           <span>租约列表</span>
-          <el-button v-if="isOwnerOrAdmin" type="primary" @click="openCreateDialog">
-            <el-icon><Plus /></el-icon>
-            创建租约
-          </el-button>
+          <div class="header-actions">
+            <el-button type="success" :icon="Download" :loading="exporting" @click="handleExport">
+              导出Excel
+            </el-button>
+            <el-button v-if="isOwnerOrAdmin" type="primary" @click="openCreateDialog">
+              <el-icon><Plus /></el-icon>
+              创建租约
+            </el-button>
+          </div>
         </div>
       </template>
 
           <!-- 筛选工具栏 -->
           <div class="filter-bar">
+            <el-input 
+              v-model="searchKeyword" 
+              placeholder="搜索租户、物业地址..." 
+              clearable 
+              :prefix-icon="Search"
+              @input="handleSearchInput"
+              style="width: 220px" 
+            />
             <el-select v-model="filters.status" placeholder="按状态筛选" clearable style="width: 150px">
               <el-option label="生效中" value="ACTIVE" />
               <el-option label="已到期" value="EXPIRED" />
@@ -180,8 +193,9 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
-import { Search, RefreshLeft, Edit, Delete, Plus } from '@element-plus/icons-vue';
+import { Search, RefreshLeft, Edit, Delete, Plus, Download } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { exportLeases } from '@/utils/download';
 
 /**
  * Lease management screen. Owners/admins can create or edit leases, while tenants only get the table view.
@@ -193,6 +207,8 @@ const formRef = ref(null);
 const leases = ref([]);
 const loading = ref(false);
 const submitting = ref(false);
+const exporting = ref(false);
+const searchKeyword = ref('');
 const filters = reactive({ status: '', propertyId: null });
 const pagination = reactive({
   page: 1,
@@ -232,7 +248,8 @@ const fetchLeases = async () => {
         page: pagination.page - 1,
         size: pagination.size,
         status: filters.status || undefined,
-        propertyId: filters.propertyId || undefined
+        propertyId: filters.propertyId || undefined,
+        keyword: searchKeyword.value || undefined
       }
     });
     leases.value = data.content;
@@ -393,8 +410,35 @@ const applyFilters = () => {
 const clearFilters = () => {
   filters.status = '';
   filters.propertyId = null;
+  searchKeyword.value = '';
   pagination.page = 1;
   fetchLeases();
+};
+
+// 搜索防抖
+let searchTimeout = null;
+const handleSearchInput = () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    pagination.page = 1;
+    fetchLeases();
+  }, 500);
+};
+
+/**
+ * 导出租约列表为 Excel
+ */
+const handleExport = async () => {
+  exporting.value = true;
+  try {
+    await exportLeases();
+    ElMessage.success('导出成功！');
+  } catch (err) {
+    ElMessage.error('导出失败，请稍后重试');
+    console.error('导出错误:', err);
+  } finally {
+    exporting.value = false;
+  }
 };
 
 onMounted(() => {
@@ -412,6 +456,11 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .filter-bar {

@@ -5,15 +5,28 @@
       <template #header>
         <div class="card-header">
           <span>物业列表</span>
-          <el-button type="primary" @click="openCreateDialog">
-            <el-icon><Plus /></el-icon>
-            新建物业
-          </el-button>
+          <div class="header-actions">
+            <el-button type="success" :icon="Download" :loading="exporting" @click="handleExport">
+              导出Excel
+            </el-button>
+            <el-button type="primary" @click="openCreateDialog">
+              <el-icon><Plus /></el-icon>
+              新建物业
+            </el-button>
+          </div>
         </div>
       </template>
 
           <!-- 筛选工具栏 -->
           <div class="filter-bar">
+            <el-input 
+              v-model="searchKeyword" 
+              placeholder="搜索地址、城市、邮编..." 
+              clearable 
+              :prefix-icon="Search"
+              @input="handleSearchInput"
+              style="width: 250px" 
+            />
             <el-input v-model="filters.city" placeholder="按城市筛选" clearable style="width: 150px" />
             <el-select v-model="filters.status" placeholder="按状态筛选" clearable style="width: 150px">
               <el-option label="可出租" value="AVAILABLE" />
@@ -181,8 +194,9 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
-import { Search, RefreshLeft, Edit, Delete, Plus } from '@element-plus/icons-vue';
+import { Search, RefreshLeft, Edit, Delete, Plus, Download } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { exportProperties } from '@/utils/download';
 
 /**
  * This view combines a property editor (admins/owners) and a paginated table shared by all authenticated roles.
@@ -193,6 +207,8 @@ const formRef = ref(null);
 const properties = ref([]); // 表格数据源
 const loading = ref(false);
 const submitting = ref(false);
+const exporting = ref(false);
+const searchKeyword = ref('');
 const filters = reactive({ city: '', status: '' });
 const pagination = reactive({
   page: 1,
@@ -236,7 +252,8 @@ const fetchProperties = async () => {
         page: pagination.page - 1, // Element UI 分页从 1 开始，后端从 0 开始
         size: pagination.size, 
         city: filters.city || undefined, 
-        status: filters.status || undefined 
+        status: filters.status || undefined,
+        keyword: searchKeyword.value || undefined
       }
     });
     properties.value = data.content;
@@ -431,9 +448,38 @@ const applyFilters = () => {
 
 const clearFilters = () => { 
   filters.city = ''; 
-  filters.status = ''; 
+  filters.status = '';
+  searchKeyword.value = '';
   pagination.page = 1; 
   fetchProperties(); 
+};
+
+// 搜索防抖
+ let searchTimeout = null;
+const handleSearchInput = () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    pagination.page = 1;
+    fetchProperties();
+  }, 500); // 500ms 防抖
+};
+
+/**
+ * 导出物业列表为 Excel
+ */
+const handleExport = async () => {
+  exporting.value = true;
+  try {
+    // 如果不是管理员，只导出自己的物业
+    const ownerId = !isAdmin && authStore.user ? authStore.user.id : null;
+    await exportProperties(ownerId);
+    ElMessage.success('导出成功！');
+  } catch (err) {
+    ElMessage.error('导出失败，请稍后重试');
+    console.error('导出错误:', err);
+  } finally {
+    exporting.value = false;
+  }
 };
 
 onMounted(() => {
@@ -454,6 +500,11 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .filter-bar {

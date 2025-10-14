@@ -56,11 +56,22 @@
           <template #header>
             <div class="card-header">
               <span>维修请求列表</span>
+              <el-button type="success" :icon="Download" :loading="exporting" @click="handleExport">
+                导出Excel
+              </el-button>
             </div>
           </template>
 
           <!-- 筛选工具栏 -->
           <div class="filter-bar">
+            <el-input 
+              v-model="searchKeyword" 
+              placeholder="搜索问题描述..." 
+              clearable 
+              :prefix-icon="Search"
+              @input="handleSearchInput"
+              style="width: 200px" 
+            />
             <el-select v-model="filters.status" placeholder="按状态筛选" clearable style="width: 150px">
               <el-option label="待处理" value="PENDING" />
               <el-option label="处理中" value="IN_PROGRESS" />
@@ -147,8 +158,9 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
-import { Search, RefreshLeft, Tools } from '@element-plus/icons-vue';
+import { Search, RefreshLeft, Tools, Download } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import { exportMaintenanceRequests } from '@/utils/download';
 
 /**
  * Maintenance centre: tenants can submit requests while owners/admins can track and update ticket status.
@@ -161,6 +173,8 @@ const formRef = ref(null);
 const requests = ref([]);
 const loading = ref(false);
 const submitting = ref(false);
+const exporting = ref(false);
+const searchKeyword = ref('');
 const filters = reactive({ status: '', propertyId: null });
 const pagination = reactive({
   page: 1,
@@ -194,7 +208,8 @@ const fetchRequests = async () => {
         page: pagination.page - 1,
         size: pagination.size,
         status: filters.status || undefined,
-        propertyId: filters.propertyId || undefined
+        propertyId: filters.propertyId || undefined,
+        keyword: searchKeyword.value || undefined
       }
     });
     requests.value = data.content;
@@ -267,8 +282,19 @@ const applyFilters = () => {
 const clearFilters = () => {
   filters.status = '';
   filters.propertyId = null;
+  searchKeyword.value = '';
   pagination.page = 1;
   fetchRequests();
+};
+
+// 搜索防抖
+let searchTimeout = null;
+const handleSearchInput = () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    pagination.page = 1;
+    fetchRequests();
+  }, 500);
 };
 
 const renderStatus = (status) => {
@@ -309,6 +335,22 @@ const formatDate = (value) => {
   }).format(new Date(value));
 };
 
+/**
+ * 导出维修记录为 Excel
+ */
+const handleExport = async () => {
+  exporting.value = true;
+  try {
+    await exportMaintenanceRequests();
+    ElMessage.success('导出成功！');
+  } catch (err) {
+    ElMessage.error('导出失败，请稍后重试');
+    console.error('导出错误:', err);
+  } finally {
+    exporting.value = false;
+  }
+};
+
 onMounted(() => {
   fetchRequests();
 });
@@ -321,6 +363,7 @@ onMounted(() => {
 
 .card-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 8px;
   font-weight: 500;
