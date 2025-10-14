@@ -30,9 +30,6 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UserMapper userMapper;
-
     /**
      * 获取当前用户资料
      */
@@ -42,7 +39,7 @@ public class UserController {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
         
-        return ResponseEntity.ok(userMapper.toDto(user));
+        return ResponseEntity.ok(UserMapper.toDto(user));
     }
 
     /**
@@ -85,7 +82,7 @@ public class UserController {
         }
 
         User updatedUser = userRepository.save(user);
-        return ResponseEntity.ok(userMapper.toDto(updatedUser));
+        return ResponseEntity.ok(UserMapper.toDto(updatedUser));
     }
 
     /**

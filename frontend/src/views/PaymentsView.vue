@@ -5,6 +5,9 @@
         <div class="card-header">
           <span>租金支付记录</span>
           <div class="header-actions">
+            <el-button type="success" :icon="Download" :loading="exporting" @click="handleExport">
+              导出Excel
+            </el-button>
             <el-input-number
               v-model="filters.leaseId"
               :min="1"
@@ -106,8 +109,9 @@
 import { reactive, ref } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
-import { Search, Money } from '@element-plus/icons-vue';
+import { Search, Money, Download } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import { exportPayments } from '@/utils/download';
 
 /**
  * Payment centre. Owners/admins can record new payments, whereas authorised viewers can filter by lease.
@@ -118,6 +122,7 @@ const isOwnerOrAdmin = authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']);
 const formRef = ref(null);
 const loading = ref(false);
 const submitting = ref(false);
+const exporting = ref(false);
 
 const filters = reactive({
   leaseId: null
@@ -210,6 +215,22 @@ const formatDateTime = (value) => {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(new Date(value));
+};
+
+/**
+ * 导出收支记录为 Excel
+ */
+const handleExport = async () => {
+  exporting.value = true;
+  try {
+    await exportPayments(filters.leaseId);
+    ElMessage.success('导出成功！');
+  } catch (err) {
+    ElMessage.error('导出失败，请稍后重试');
+    console.error('导出错误:', err);
+  } finally {
+    exporting.value = false;
+  }
 };
 </script>
 
