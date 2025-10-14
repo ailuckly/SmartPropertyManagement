@@ -1,6 +1,7 @@
 package com.example.propertymanagement.repository;
 
 import com.example.propertymanagement.model.Lease;
+import com.example.propertymanagement.model.LeaseStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -25,9 +26,9 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
     
     Long countByTenantId(Long tenantId);
     
-    List<Lease> findByEndDateBetweenAndStatus(LocalDate startDate, LocalDate endDate, Lease.Status status);
+    List<Lease> findByEndDateBetweenAndStatus(LocalDate startDate, LocalDate endDate, LeaseStatus status);
     
-    List<Lease> findByProperty_OwnerIdAndEndDateBetweenAndStatus(Long ownerId, LocalDate startDate, LocalDate endDate, Lease.Status status);
+    List<Lease> findByProperty_OwnerIdAndEndDateBetweenAndStatus(Long ownerId, LocalDate startDate, LocalDate endDate, LeaseStatus status);
     
     @EntityGraph(attributePaths = {"property", "tenant"})
     List<Lease> findTop5ByOrderByIdDesc();

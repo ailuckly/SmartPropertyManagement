@@ -1,6 +1,7 @@
 package com.example.propertymanagement.repository;
 
 import com.example.propertymanagement.model.MaintenanceRequest;
+import com.example.propertymanagement.model.MaintenanceStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,24 +16,24 @@ public interface MaintenanceRequestRepository extends JpaRepository<MaintenanceR
     Page<MaintenanceRequest> findAllByPropertyOwnerId(Long ownerId, Pageable pageable);
     
     // 统计查询方法
-    Long countByStatus(MaintenanceRequest.Status status);
+    Long countByStatus(MaintenanceStatus status);
     
-    Long countByProperty_OwnerIdAndStatus(Long ownerId, MaintenanceRequest.Status status);
+    Long countByProperty_OwnerIdAndStatus(Long ownerId, MaintenanceStatus status);
     
-    Long countByRequesterId(Long requesterId);
+    Long countByTenantId(Long tenantId);
     
-    @EntityGraph(attributePaths = {"property"})
+    @EntityGraph(attributePaths = {"property", "tenant"})
     List<MaintenanceRequest> findByProperty_OwnerId(Long ownerId);
     
-    @EntityGraph(attributePaths = {"property"})
-    List<MaintenanceRequest> findByRequesterId(Long requesterId);
+    @EntityGraph(attributePaths = {"property", "tenant"})
+    List<MaintenanceRequest> findByTenantId(Long tenantId);
     
-    @EntityGraph(attributePaths = {"property"})
+    @EntityGraph(attributePaths = {"property", "tenant"})
     List<MaintenanceRequest> findTop5ByOrderByIdDesc();
     
-    @EntityGraph(attributePaths = {"property"})
+    @EntityGraph(attributePaths = {"property", "tenant"})
     List<MaintenanceRequest> findTop5ByProperty_OwnerIdOrderByIdDesc(Long ownerId);
     
-    @EntityGraph(attributePaths = {"property"})
-    List<MaintenanceRequest> findTop5ByRequesterIdOrderByIdDesc(Long requesterId);
+    @EntityGraph(attributePaths = {"property", "tenant"})
+    List<MaintenanceRequest> findTop5ByTenantIdOrderByIdDesc(Long tenantId);
 }
