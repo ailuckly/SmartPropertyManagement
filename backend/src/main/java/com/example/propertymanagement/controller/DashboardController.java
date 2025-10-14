@@ -175,25 +175,19 @@ public class DashboardController {
                 currentUser.getId(), startDate, endDate);
         }
 
-        // 按月份分组统计
+        // 按月份分组统计（所有支付视为租金收入）
         Map<YearMonth, BigDecimal> incomeByMonth = new TreeMap<>();
-        Map<YearMonth, BigDecimal> expenseByMonth = new TreeMap<>();
         
         // 初始化所有月份为0
         for (int i = 0; i < 6; i++) {
             YearMonth month = YearMonth.from(startDate.plusMonths(i));
             incomeByMonth.put(month, BigDecimal.ZERO);
-            expenseByMonth.put(month, BigDecimal.ZERO);
         }
 
-        // 累加收支
+        // 累加租金收入
         for (Payment payment : payments) {
             YearMonth month = YearMonth.from(payment.getPaymentDate());
-            if ("INCOME".equals(payment.getType())) {
-                incomeByMonth.merge(month, payment.getAmount(), BigDecimal::add);
-            } else if ("EXPENSE".equals(payment.getType())) {
-                expenseByMonth.merge(month, payment.getAmount(), BigDecimal::add);
-            }
+            incomeByMonth.merge(month, payment.getAmount(), BigDecimal::add);
         }
 
         Map<String, Object> result = new HashMap<>();
@@ -201,7 +195,10 @@ public class DashboardController {
                 .map(ym -> ym.getYear() + "-" + String.format("%02d", ym.getMonthValue()))
                 .collect(Collectors.toList()));
         result.put("income", incomeByMonth.values());
-        result.put("expense", expenseByMonth.values());
+        // 暂时不追踪支出，返回空列表
+        result.put("expense", incomeByMonth.keySet().stream()
+                .map(m -> BigDecimal.ZERO)
+                .collect(Collectors.toList()));
 
         return ResponseEntity.ok(result);
     }
