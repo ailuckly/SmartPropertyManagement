@@ -1,6 +1,5 @@
 package com.example.propertymanagement.dto.auth;
 
-import com.example.propertymanagement.model.RoleName;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -26,6 +25,6 @@ public record RegisterRequest(
     @Pattern(regexp = "^[+0-9\\-\\s]{0,20}$", message = "手机号格式不正确")
     String phoneNumber,
 
-    RoleName role
+    String role
 ) {
 }
