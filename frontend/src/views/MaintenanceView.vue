@@ -48,6 +48,7 @@
             下一页
           </button>
         </div>
+        </div>
       </header>
       <div class="table-wrapper" v-if="!loading">
         <table class="table">

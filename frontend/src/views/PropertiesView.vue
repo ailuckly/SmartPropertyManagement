@@ -80,7 +80,15 @@
             <option value="UNDER_MAINTENANCE">维护中</option>
           </select>
           <button class="btn-primary" @click="applyFilters">筛选</button>
-          <button class="link-btn"      <div class="table-wrapper" v-if="!loading">
+          <button class="link-btn" @click="clearFilters">清空</button>
+          <div class="pagination">
+            <button :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">上一页</button>
+            <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
+            <button :disabled="pagination.page + 1 >= pagination.totalPages" @click="changePage(pagination.page + 1)">下一页</button>
+          </div>
+        </div>
+      </header>
+      <div class="table-wrapper" v-if="!loading">
         <table class="table">
           <thead>
             <tr>
