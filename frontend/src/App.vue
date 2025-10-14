@@ -84,6 +84,13 @@
               <el-icon><User /></el-icon>
               <span>用户管理</span>
             </el-menu-item>
+            
+            <el-divider style="margin: 8px 0" />
+            <div class="menu-group-title">开发测试</div>
+            <el-menu-item index="/file-upload-test">
+              <el-icon><Upload /></el-icon>
+              <span>文件上传测试</span>
+            </el-menu-item>
           </template>
           
           <!-- 业主菜单 -->
@@ -158,7 +165,8 @@ import {
   Tools,
   Document,
   Wallet,
-  ArrowRight
+  ArrowRight,
+  Upload
 } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
