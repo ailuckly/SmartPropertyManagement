@@ -83,13 +83,20 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
+  console.log('[Router] Navigating to:', to.path);
+  console.log('[Router] Auth initialized:', authStore.initialized);
+  console.log('[Router] Is authenticated:', authStore.isAuthenticated);
+
   // 仅在访问受保护页面时阻塞等待会话恢复；
   // 对于登录/注册等 guestOnly 页面，不阻塞导航，避免初次进入时的空白等待
   if (!authStore.initialized) {
     if (to.meta.requiresAuth) {
+      console.log('[Router] Fetching current user...');
       try {
         await authStore.fetchCurrentUser();
-      } catch (_) {
+        console.log('[Router] User fetched successfully');
+      } catch (error) {
+        console.error('[Router] Failed to fetch user:', error);
         // 忽略错误，继续根据 isAuthenticated 判定
       }
     } else {
@@ -99,17 +106,21 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    console.log('[Router] Access denied - not authenticated, redirecting to login');
     return next({ name: 'login', query: { redirect: to.fullPath } });
   }
 
   if (to.meta.guestOnly && authStore.isAuthenticated) {
+    console.log('[Router] Already authenticated, redirecting to dashboard');
     return next({ name: 'dashboard' });
   }
 
   if (to.meta.roles && !authStore.hasAnyRole(to.meta.roles)) {
+    console.log('[Router] Access denied - insufficient permissions, redirecting to dashboard');
     return next({ name: 'dashboard' });
   }
 
+  console.log('[Router] Access granted, proceeding to:', to.path);
   return next();
 });
 
