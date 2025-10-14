@@ -15,8 +15,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -25,7 +27,7 @@ import java.time.Instant;
 @Builder
 @ToString(exclude = "user")
 @Entity
-@Table(name = "refresh_tokens")
+@Table(name = "refresh_token")
 public class RefreshToken {
 
     @Id
@@ -40,5 +42,17 @@ public class RefreshToken {
     private String token;
 
     @Column(name = "expiry_date", nullable = false)
-    private Instant expiryDate;
+    private LocalDateTime expiryDate;
+
+    @CreationTimestamp
+    @Column(name = "gmt_create", updatable = false, nullable = false)
+    private LocalDateTime gmtCreate;
+
+    @UpdateTimestamp
+    @Column(name = "gmt_modified", nullable = false)
+    private LocalDateTime gmtModified;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Integer isDeleted = 0;
 }

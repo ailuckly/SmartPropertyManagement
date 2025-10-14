@@ -18,9 +18,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -29,7 +30,7 @@ import java.time.Instant;
 @Builder
 @ToString(exclude = "owner")
 @Entity
-@Table(name = "properties")
+@Table(name = "property")
 public class Property {
 
     @Id
@@ -73,6 +74,14 @@ public class Property {
     private BigDecimal rentAmount;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    @Column(name = "gmt_create", updatable = false, nullable = false)
+    private LocalDateTime gmtCreate;
+
+    @UpdateTimestamp
+    @Column(name = "gmt_modified", nullable = false)
+    private LocalDateTime gmtModified;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Integer isDeleted = 0;
 }

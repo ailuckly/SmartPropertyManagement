@@ -18,8 +18,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -28,7 +29,7 @@ import java.time.Instant;
 @Builder
 @ToString(exclude = {"property", "tenant"})
 @Entity
-@Table(name = "maintenance_requests")
+@Table(name = "maintenance_request")
 public class MaintenanceRequest {
 
     @Id
@@ -53,8 +54,20 @@ public class MaintenanceRequest {
 
     @CreationTimestamp
     @Column(name = "reported_at", nullable = false, updatable = false)
-    private Instant reportedAt;
+    private LocalDateTime reportedAt;
 
     @Column(name = "completed_at")
-    private Instant completedAt;
+    private LocalDateTime completedAt;
+
+    @CreationTimestamp
+    @Column(name = "gmt_create", updatable = false, nullable = false)
+    private LocalDateTime gmtCreate;
+
+    @UpdateTimestamp
+    @Column(name = "gmt_modified", nullable = false)
+    private LocalDateTime gmtModified;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Integer isDeleted = 0;
 }
