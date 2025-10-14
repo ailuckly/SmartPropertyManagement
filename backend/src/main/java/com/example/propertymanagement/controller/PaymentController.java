@@ -29,12 +29,23 @@ public class PaymentController {
     }
 
     /**
-     * Lists payments for a lease after the service layer checks visibility.
+     * Lists all payments visible to the current user.
+     * Optionally filter by leaseId.
+     * - Admin sees all payments
+     * - Owner sees their properties' payments
+     * - Tenant sees their leases' payments
+     * 
+     * @param leaseId Optional lease ID to filter by
+     * @param pageable Pagination parameters
      */
     @GetMapping
-    public ResponseEntity<PageResponse<PaymentDto>> getPayments(@RequestParam Long leaseId,
-                                                                @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(paymentService.getPayments(leaseId, pageable));
+    public ResponseEntity<PageResponse<PaymentDto>> getAllPayments(
+            @RequestParam(required = false) Long leaseId,
+            @PageableDefault Pageable pageable) {
+        if (leaseId != null) {
+            return ResponseEntity.ok(paymentService.getPaymentsByLease(leaseId, pageable));
+        }
+        return ResponseEntity.ok(paymentService.getAllPayments(pageable));
     }
 
     /**

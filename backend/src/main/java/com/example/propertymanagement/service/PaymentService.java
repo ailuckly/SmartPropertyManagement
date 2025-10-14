@@ -38,14 +38,39 @@ public class PaymentService {
     }
 
     /**
-     * 查询租约对应的支付记录，并在服务层完成权限校验。
+     * 查询所有可见的支付记录（根据用户角色）。
+     *
+     * @param pageable 分页参数
+     * @return 支付记录分页结果
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<PaymentDto> getAllPayments(Pageable pageable) {
+        UserPrincipal principal = getCurrentUser();
+        Page<com.example.propertymanagement.model.Payment> page;
+
+        if (isAdmin(principal)) {
+            // 管理员可以查看所有支付记录
+            page = paymentRepository.findAll(pageable);
+        } else if (isOwner(principal)) {
+            // 业主可以查看自己物业的支付记录
+            page = paymentRepository.findAllByLeasePropertyOwnerId(principal.getId(), pageable);
+        } else {
+            // 租客只能查看自己租约的支付记录
+            page = paymentRepository.findAllByLeaseTenantId(principal.getId(), pageable);
+        }
+
+        return PageResponse.from(page.map(PaymentMapper::toDto));
+    }
+
+    /**
+     * 查询特定租约对应的支付记录，并在服务层完成权限校验。
      *
      * @param leaseId  租约 ID
      * @param pageable 分页参数
      * @return 支付记录分页结果
      */
     @Transactional(readOnly = true)
-    public PageResponse<PaymentDto> getPayments(Long leaseId, Pageable pageable) {
+    public PageResponse<PaymentDto> getPaymentsByLease(Long leaseId, Pageable pageable) {
         Lease lease = leaseRepository.findById(leaseId)
             .orElseThrow(() -> new ResourceNotFoundException("未找到租约"));
         UserPrincipal principal = getCurrentUser();
@@ -107,5 +132,9 @@ public class PaymentService {
 
     private boolean isAdmin(UserPrincipal principal) {
         return SecurityUtils.hasRole(principal, RoleName.ROLE_ADMIN.name());
+    }
+
+    private boolean isOwner(UserPrincipal principal) {
+        return SecurityUtils.hasRole(principal, RoleName.ROLE_OWNER.name());
     }
 }
