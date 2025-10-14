@@ -1,107 +1,182 @@
 <template>
-  <div class="leases-layout">
-    <section v-if="isOwnerOrAdmin" class="card form-card">
-      <header>
-        <h2>{{ editingId ? '更新租约' : '创建租约' }}</h2>
-        <button v-if="editingId" class="link-btn" @click="resetForm">取消编辑</button>
-      </header>
-      <form @submit.prevent="handleSubmit" class="grid-form">
-        <div class="form-field">
-          <label for="propertyId">物业ID</label>
-          <input id="propertyId" v-model.number="form.propertyId" type="number" min="1" required />
-        </div>
-        <div class="form-field">
-          <label for="tenantId">租户ID</label>
-          <input id="tenantId" v-model.number="form.tenantId" type="number" min="1" required />
-        </div>
-        <div class="form-field">
-          <label for="startDate">开始日期</label>
-          <input id="startDate" v-model="form.startDate" type="date" required />
-        </div>
-        <div class="form-field">
-          <label for="endDate">结束日期</label>
-          <input id="endDate" v-model="form.endDate" type="date" required />
-        </div>
-        <div class="form-field">
-          <label for="rentAmount">月租(¥)</label>
-          <input id="rentAmount" v-model.number="form.rentAmount" type="number" min="0" step="0.01" required />
-        </div>
-        <div class="form-field">
-          <label for="status">状态</label>
-          <select id="status" v-model="form.status">
-            <option value="ACTIVE">生效中</option>
-            <option value="EXPIRED">已到期</option>
-            <option value="TERMINATED">已终止</option>
-          </select>
-        </div>
-        <div class="form-actions">
-          <button class="btn-primary" type="submit">{{ editingId ? '保存修改' : '创建租约' }}</button>
-        </div>
-      </form>
-      <p v-if="error" class="error-msg">{{ error }}</p>
-    </section>
+  <div class="leases-view">
+    <el-row :gutter="20">
+      <!-- 表单卡片（仅业主和管理员可见） -->
+      <el-col v-if="isOwnerOrAdmin" :xs="24" :lg="8">
+        <el-card shadow="never">
+          <template #header>
+            <div class="card-header">
+              <span>{{ editingId ? '更新租约' : '创建租约' }}</span>
+              <el-button v-if="editingId" link type="primary" @click="resetForm">
+                <el-icon><RefreshLeft /></el-icon>
+                取消编辑
+              </el-button>
+            </div>
+          </template>
 
-    <section class="card">
-      <header class="table-header">
-        <h2>租约列表</h2>
-        <div class="filters">
-<select v-model="filters.status" class="input">
-            <option value="">所有状态</option>
-            <option value="ACTIVE">生效中</option>
-            <option value="EXPIRED">已到期</option>
-            <option value="TERMINATED">已终止</option>
-          </select>
-<input v-model.number="filters.propertyId" type="number" min="1" placeholder="物业ID" class="input" />
-          <button class="btn-primary" @click="applyFilters">筛选</button>
-<button class="btn-link" @click="clearFilters">清空</button>
-          <div class="pagination">
-<button class="btn" :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">上一页</button>
-            <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
-<button class="btn" :disabled="pagination.page + 1 >= pagination.totalPages" @click="changePage(pagination.page + 1)">下一页</button>
+          <el-form
+            ref="formRef"
+            :model="form"
+            :rules="rules"
+            label-width="90px"
+            size="default"
+            @submit.prevent="handleSubmit"
+          >
+            <el-form-item label="物业ID" prop="propertyId">
+              <el-input-number
+                v-model="form.propertyId"
+                :min="1"
+                placeholder="请输入物业ID"
+                style="width: 100%"
+              />
+            </el-form-item>
+
+            <el-form-item label="租户ID" prop="tenantId">
+              <el-input-number
+                v-model="form.tenantId"
+                :min="1"
+                placeholder="请输入租户ID"
+                style="width: 100%"
+              />
+            </el-form-item>
+
+            <el-form-item label="开始日期" prop="startDate">
+              <el-date-picker
+                v-model="form.startDate"
+                type="date"
+                placeholder="选择开始日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+
+            <el-form-item label="结束日期" prop="endDate">
+              <el-date-picker
+                v-model="form.endDate"
+                type="date"
+                placeholder="选择结束日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+
+            <el-form-item label="月租(¥)" prop="rentAmount">
+              <el-input-number
+                v-model="form.rentAmount"
+                :min="0"
+                :precision="2"
+                placeholder="请输入月租金额"
+                style="width: 100%"
+              />
+            </el-form-item>
+
+            <el-form-item label="状态" prop="status">
+              <el-select v-model="form.status" style="width: 100%">
+                <el-option label="生效中" value="ACTIVE" />
+                <el-option label="已到期" value="EXPIRED" />
+                <el-option label="已终止" value="TERMINATED" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item>
+              <el-button type="primary" native-type="submit" :loading="submitting" style="width: 100%">
+                {{ editingId ? '保存修改' : '创建租约' }}
+              </el-button>
+            </el-form-item>
+          </el-form>
+
+          <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-top: 12px" />
+        </el-card>
+      </el-col>
+
+      <!-- 列表卡片 -->
+      <el-col :xs="24" :lg="isOwnerOrAdmin ? 16 : 24">
+        <el-card shadow="never">
+          <template #header>
+            <div class="card-header">
+              <span>租约列表</span>
+            </div>
+          </template>
+
+          <!-- 筛选工具栏 -->
+          <div class="filter-bar">
+            <el-select v-model="filters.status" placeholder="按状态筛选" clearable style="width: 150px">
+              <el-option label="生效中" value="ACTIVE" />
+              <el-option label="已到期" value="EXPIRED" />
+              <el-option label="已终止" value="TERMINATED" />
+            </el-select>
+            <el-input-number
+              v-model="filters.propertyId"
+              :min="1"
+              placeholder="按物业ID筛选"
+              clearable
+              style="width: 150px"
+            />
+            <el-button type="primary" :icon="Search" @click="applyFilters">筛选</el-button>
+            <el-button :icon="RefreshLeft" @click="clearFilters">清空</el-button>
           </div>
-        </div>
-      </header>
-      <div class="table-wrapper" v-if="!loading">
-        <table class="table">
-          <thead>
-            <tr>
-              <th class="id-col">ID</th>
-              <th>物业</th>
-              <th>租户</th>
-              <th>租期</th>
-              <th class="num">月租</th>
-              <th>状态</th>
-              <th v-if="isOwnerOrAdmin">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in leases" :key="item.id">
-              <td class="id-col">{{ item.id }}</td>
-              <td>
-                <div class="address-cell">
-                  <strong>#{{ item.propertyId }}</strong>
-                  <small>{{ item.propertyAddress }}</small>
+
+          <!-- 表格 -->
+          <el-table
+            :data="leases"
+            v-loading="loading"
+            stripe
+            style="width: 100%; margin-top: 16px"
+          >
+            <el-table-column prop="id" label="ID" width="60" />
+            <el-table-column label="物业" min-width="200">
+              <template #default="{ row }">
+                <div class="property-cell">
+                  <div class="property-id">#{{ row.propertyId }}</div>
+                  <div class="property-address">{{ row.propertyAddress }}</div>
                 </div>
-              </td>
-              <td>{{ item.tenantUsername }}</td>
-              <td>{{ formatDate(item.startDate) }} ~ {{ formatDate(item.endDate) }}</td>
-              <td class="num">{{ item.rentAmount }}</td>
-              <td><span :class="['status-pill', item.status.toLowerCase()]">{{ renderStatus(item.status) }}</span></td>
-              <td v-if="isOwnerOrAdmin" class="actions">
-                <button @click="startEdit(item)">编辑</button>
-                <button class="danger" @click="remove(item.id)">删除</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-else class="card empty-card">
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px;"></div>
-      </div>
-    </section>
+              </template>
+            </el-table-column>
+            <el-table-column prop="tenantUsername" label="租户" width="110" />
+            <el-table-column label="租期" min-width="200">
+              <template #default="{ row }">
+                {{ formatDate(row.startDate) }} ~ {{ formatDate(row.endDate) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="rentAmount" label="月租(¥)" width="110" align="right" />
+            <el-table-column prop="status" label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.status)" size="small">
+                  {{ renderStatus(row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column v-if="isOwnerOrAdmin" label="操作" width="150" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="primary" size="small" @click="startEdit(row)">
+                  <el-icon><Edit /></el-icon>
+                  编辑
+                </el-button>
+                <el-button link type="danger" size="small" @click="remove(row.id)">
+                  <el-icon><Delete /></el-icon>
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              v-model:current-page="pagination.page"
+              v-model:page-size="pagination.size"
+              :total="pagination.total"
+              :page-sizes="[10, 20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              @current-change="handlePageChange"
+              @size-change="handleSizeChange"
+            />
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -109,6 +184,8 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
+import { Search, RefreshLeft, Edit, Delete } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 /**
  * Lease management screen. Owners/admins can create or edit leases, while tenants only get the table view.
@@ -116,23 +193,33 @@ import { useAuthStore } from '../stores/auth';
 const authStore = useAuthStore();
 const isOwnerOrAdmin = authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']);
 
+const formRef = ref(null);
+const leases = ref([]);
+const loading = ref(false);
+const submitting = ref(false);
+const filters = reactive({ status: '', propertyId: null });
+const pagination = reactive({
+  page: 1,
+  size: 10,
+  total: 0
+});
+
 const form = reactive({
-  propertyId: '',
-  tenantId: '',
+  propertyId: null,
+  tenantId: null,
   startDate: '',
   endDate: '',
-  rentAmount: '',
+  rentAmount: null,
   status: 'ACTIVE'
 });
 
-const leases = ref([]); // 租约表格
-const loading = ref(false);
-const filters = reactive({ status: '', propertyId: '' });
-const pagination = reactive({
-  page: 0,
-  size: 10,
-  totalPages: 1
-});
+const rules = {
+  propertyId: [{ required: true, message: '请输入物业ID', trigger: 'blur' }],
+  tenantId: [{ required: true, message: '请输入租户ID', trigger: 'blur' }],
+  startDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
+  endDate: [{ required: true, message: '请选择结束日期', trigger: 'change' }],
+  rentAmount: [{ required: true, message: '请输入月租金额', trigger: 'blur' }]
+};
 
 const editingId = ref(null);
 const error = ref('');
@@ -145,35 +232,65 @@ const fetchLeases = async () => {
   try {
     const { data } = await api.get('/leases', {
       params: {
-        page: pagination.page,
+        page: pagination.page - 1,
         size: pagination.size,
         status: filters.status || undefined,
         propertyId: filters.propertyId || undefined
       }
     });
     leases.value = data.content;
-    pagination.totalPages = Math.max(data.totalPages, 1);
+    pagination.total = data.totalElements || 0;
+  } catch (err) {
+    ElMessage.error('加载租约列表失败');
   } finally {
     loading.value = false;
   }
+};
+
+const resetForm = () => {
+  editingId.value = null;
+  if (formRef.value) {
+    formRef.value.resetFields();
+  }
+  Object.assign(form, {
+    propertyId: null,
+    tenantId: null,
+    startDate: '',
+    endDate: '',
+    rentAmount: null,
+    status: 'ACTIVE'
+  });
+  error.value = '';
 };
 
 /**
  * Handles create/update operations depending on whether we are currently editing a row.
  */
 const handleSubmit = async () => {
-  try {
+  if (!formRef.value) return;
+  
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return;
+    
+    submitting.value = true;
     error.value = '';
-    if (editingId.value) {
-      await api.put(`/leases/${editingId.value}`, form);
-    } else {
-      await api.post('/leases', form);
+    
+    try {
+      if (editingId.value) {
+        await api.put(`/leases/${editingId.value}`, form);
+        ElMessage.success('租约更新成功');
+      } else {
+        await api.post('/leases', form);
+        ElMessage.success('租约创建成功');
+      }
+      resetForm();
+      fetchLeases();
+    } catch (err) {
+      error.value = err.response?.data?.message ?? '保存失败，请确认输入信息';
+    } finally {
+      submitting.value = false;
     }
-    resetForm();
-    fetchLeases();
-  } catch (err) {
-    error.value = err.response?.data?.message ?? '保存失败，请确认输入信息';
-  }
+  });
 };
 
 /**
@@ -189,33 +306,44 @@ const startEdit = (item) => {
     rentAmount: item.rentAmount,
     status: item.status
   });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 /**
  * Deletes a lease after confirming with the user (owners/admins only).
  */
 const remove = async (id) => {
-  if (!confirm('确认删除该租约？')) return;
-  await api.delete(`/leases/${id}`);
-  fetchLeases();
+  try {
+    await ElMessageBox.confirm('确认删除该租约？此操作不可撤销。', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    
+    await api.delete(`/leases/${id}`);
+    ElMessage.success('删除成功');
+    fetchLeases();
+  } catch (err) {
+    if (err !== 'cancel') {
+      ElMessage.error('删除失败');
+    }
+  }
 };
 
-const changePage = (page) => {
+const handlePageChange = (page) => {
   pagination.page = page;
   fetchLeases();
 };
 
-const resetForm = () => {
-  editingId.value = null;
-  Object.assign(form, {
-    propertyId: '',
-    tenantId: '',
-    startDate: '',
-    endDate: '',
-    rentAmount: '',
-    status: 'ACTIVE'
-  });
-  error.value = '';
+const handleSizeChange = (size) => {
+  pagination.size = size;
+  pagination.page = 1;
+  fetchLeases();
+};
+
+const formatDate = (value) => {
+  if (!value) return '-';
+  return value;
 };
 
 const renderStatus = (status) => {
@@ -231,106 +359,79 @@ const renderStatus = (status) => {
   }
 };
 
-const formatDate = (value) => {
-  if (!value) return '-';
-  return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' }).format(new Date(value));
+const getStatusType = (status) => {
+  switch (status) {
+    case 'ACTIVE':
+      return 'success';
+    case 'EXPIRED':
+      return 'info';
+    case 'TERMINATED':
+      return 'danger';
+    default:
+      return 'info';
+  }
 };
 
-const applyFilters = () => { pagination.page = 0; fetchLeases(); };
-const clearFilters = () => { filters.status=''; filters.propertyId=''; pagination.page = 0; fetchLeases(); };
+const applyFilters = () => {
+  pagination.page = 1;
+  fetchLeases();
+};
 
-onMounted(fetchLeases);
+const clearFilters = () => {
+  filters.status = '';
+  filters.propertyId = null;
+  pagination.page = 1;
+  fetchLeases();
+};
+
+onMounted(() => {
+  fetchLeases();
+});
 </script>
 
 <style scoped>
-.leases-layout {
-  display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 24px;
+.leases-view {
+  padding: 0;
 }
 
-@media (max-width: 1080px) {
-  .leases-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-.grid-form {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.grid-form .form-field:nth-child(odd),
-.grid-form .form-field:nth-child(even) {
-  min-width: 0;
-}
-
-.form-actions {
-  grid-column: span 2;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 12px 8px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.table-header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 500;
 }
 
-.pagination {
+.filter-bar {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
+  align-items: center;
 }
 
-.status-pill {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
+.property-cell {
+  line-height: 1.5;
+}
+
+.property-id {
+  font-weight: 500;
+  color: #303133;
+}
+
+.property-address {
   font-size: 12px;
-  color: #fff;
+  color: #909399;
+  margin-top: 4px;
 }
 
-.status-pill.active {
-  background: #22c55e;
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
-.status-pill.expired {
-  background: #f97316;
-}
-
-.status-pill.terminated {
-  background: #ef4444;
-}
-
-.actions button {
-  margin-right: 8px;
-  padding: 4px 8px;
-}
-
-.actions .danger {
-  color: #ef4444;
-  border: 1px solid #ef4444;
-  background: none;
-}
-.error-msg {
-  color: #ef4444;
-  margin-top: 12px;
+@media (max-width: 1200px) {
+  :deep(.el-col) {
+    margin-bottom: 20px;
+  }
 }
 </style>

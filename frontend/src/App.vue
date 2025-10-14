@@ -1,130 +1,170 @@
 <template>
-  <div class="app-container">
+  <el-container class="app-container">
     <!-- Top header -->
-    <header class="app-header">
+    <el-header class="app-header">
       <div class="logo-group">
         <img src="@/assets/logo.svg" alt="logo" />
         <span>智慧物业管理平台</span>
       </div>
       <div class="header-actions">
         <template v-if="isAuthenticated">
-          <input class="input" placeholder="搜索（预留）" style="min-width:200px;" />
-          <div class="user-menu" @mouseleave="menuOpen=false">
-            <button class="nav-link" @click="menuOpen=!menuOpen">{{ user?.username }}</button>
-            <div v-if="menuOpen" class="menu">
-              <button @click="logout">退出登录</button>
-            </div>
-          </div>
+          <el-input
+            v-model="searchText"
+            placeholder="搜索（预留）"
+            :prefix-icon="Search"
+            style="width: 200px"
+            clearable
+          />
+          <el-dropdown @command="handleCommand">
+            <span class="user-dropdown">
+              <el-icon><User /></el-icon>
+              <span>{{ user?.username }}</span>
+              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="logout">
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </template>
         <template v-else>
-          <RouterLink to="/login" class="nav-link">登录</RouterLink>
-          <RouterLink to="/register" class="nav-link">注册</RouterLink>
+          <el-button text @click="$router.push('/login')">登录</el-button>
+          <el-button type="primary" @click="$router.push('/register')">注册</el-button>
         </template>
       </div>
-    </header>
+    </el-header>
 
-    <!-- Sidebar for authenticated users -->
-    <aside v-if="isAuthenticated" class="sidebar">
-      <div class="section-title">总览</div>
-      <nav class="nav">
-        <RouterLink to="/" class="nav-item">仪表盘</RouterLink>
-      </nav>
-      <div class="section-title">业务</div>
-      <nav class="nav">
-        <RouterLink to="/properties" class="nav-item">物业管理</RouterLink>
-        <RouterLink v-if="isTenant" to="/maintenance" class="nav-item">维修申请</RouterLink>
-        <RouterLink v-if="isOwnerOrAdmin" to="/maintenance" class="nav-item">维修工单</RouterLink>
-        <RouterLink to="/leases" class="nav-item">租约</RouterLink>
-        <RouterLink v-if="isOwnerOrAdmin" to="/payments" class="nav-item">收支记录</RouterLink>
-      </nav>
-    </aside>
+    <el-container class="main-container">
+      <!-- Sidebar for authenticated users -->
+      <el-aside v-if="isAuthenticated" width="200px" class="app-aside">
+        <el-menu
+          :default-active="activeMenu"
+          :router="true"
+          background-color="#ffffff"
+          text-color="#303133"
+          active-text-color="#409EFF"
+        >
+          <el-menu-item index="/">
+            <el-icon><DataLine /></el-icon>
+            <span>仪表盘</span>
+          </el-menu-item>
+          
+          <el-divider style="margin: 8px 0" />
+          
+          <el-menu-item index="/properties">
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>物业管理</span>
+          </el-menu-item>
+          
+          <el-menu-item v-if="isTenant" index="/maintenance">
+            <el-icon><Tools /></el-icon>
+            <span>维修申请</span>
+          </el-menu-item>
+          
+          <el-menu-item v-if="isOwnerOrAdmin" index="/maintenance">
+            <el-icon><Tools /></el-icon>
+            <span>维修工单</span>
+          </el-menu-item>
+          
+          <el-menu-item index="/leases">
+            <el-icon><Document /></el-icon>
+            <span>租约</span>
+          </el-menu-item>
+          
+          <el-menu-item v-if="isOwnerOrAdmin" index="/payments">
+            <el-icon><Wallet /></el-icon>
+            <span>收支记录</span>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
 
-    <!-- Main content -->
-    <main :class="['app-main', isAuthenticated ? 'main-with-sidebar' : '']">
-      <div v-if="isAuthenticated" class="container page-header">
-        <nav aria-label="Breadcrumb">
-          <RouterLink to="/" class="nav-link">首页</RouterLink>
-          <span style="opacity:.6; padding: 0 6px;">/</span>
-          <span>{{ pageTitle }}</span>
-        </nav>
-        <h1 style="margin:0; font-size:18px;">{{ pageTitle }}</h1>
-      </div>
-      <NotifyHost />
-      <RouterView />
-    </main>
-  </div>
+      <!-- Main content -->
+      <el-main class="app-main">
+        <div v-if="isAuthenticated" class="page-header">
+          <el-breadcrumb :separator-icon="ArrowRight">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item v-if="pageTitle">{{ pageTitle }}</el-breadcrumb-item>
+          </el-breadcrumb>
+          <h1 class="page-title">{{ pageTitle }}</h1>
+        </div>
+        <NotifyHost />
+        <RouterView />
+      </el-main>
+    </el-container>
+  </el-container>
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue';
-import { RouterLink, RouterView, useRoute } from 'vue-router';
+import { computed, ref } from 'vue';
+import { RouterView, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from './stores/auth';
+import NotifyHost from './components/NotifyHost.vue';
+import {
+  Search,
+  User,
+  ArrowDown,
+  SwitchButton,
+  DataLine,
+  OfficeBuilding,
+  Tools,
+  Document,
+  Wallet,
+  ArrowRight
+} from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const authStore = useAuthStore();
 const route = useRoute();
+const router = useRouter();
 
+const searchText = ref('');
 const user = computed(() => authStore.user);
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const isOwnerOrAdmin = computed(() => authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']));
 const isTenant = computed(() => authStore.hasAnyRole(['ROLE_TENANT']));
 const pageTitle = computed(() => route.meta?.title ?? '');
+const activeMenu = computed(() => route.path);
 
-// state first, then computed getter/setter bound to it
-const state = reactive({ menuOpen: false });
-const menuOpen = computed({
-  get: () => state.menuOpen,
-  set: (v) => (state.menuOpen = v)
-});
-
-const logout = () => {
-  state.menuOpen = false;
-  authStore.logout();
+const handleCommand = (command) => {
+  if (command === 'logout') {
+    authStore.logout();
+    ElMessage.success('已退出登录');
+    router.push('/login');
+  }
 };
 </script>
 
 <style scoped>
 .app-container {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
-  height: 64px;
-  background: #0f172a;
-  color: #fff;
+  padding: 0 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e4e7ed;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .logo-group {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 18px;
+  color: #303133;
 }
 
 .logo-group img {
   width: 32px;
   height: 32px;
-}
-
-nav {
-  display: flex;
-  gap: 16px;
-}
-
-.nav-link {
-  color: #e2e8f0;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.nav-link:hover {
-  color: #38bdf8;
 }
 
 .header-actions {
@@ -133,37 +173,57 @@ nav {
   gap: 16px;
 }
 
-.user-menu { position: relative; }
-.user-menu .menu {
-  position: absolute;
-  right: 0;
-  top: 36px;
-  background: #fff;
-  color: #0f172a;
-  border-radius: 10px;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
-  padding: 8px;
+.user-dropdown {
   display: flex;
-  flex-direction: column;
-}
-.user-menu .menu button {
-  background: none;
-  border: none;
-  text-align: left;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+  color: #606266;
 }
-.user-menu .menu button:hover { background: #f1f5f9; }
 
-.welcome {
-  font-size: 14px;
-  color: #cbd5f5;
+.user-dropdown:hover {
+  background-color: #f5f7fa;
+}
+
+.main-container {
+  height: calc(100vh - 60px);
+}
+
+.app-aside {
+  background-color: #ffffff;
+  border-right: 1px solid #e4e7ed;
+  overflow-y: auto;
 }
 
 .app-main {
-  flex: 1;
-  padding: 24px;
-  background: #f1f5f9;
-  min-height: calc(100vh - 64px);
+  background-color: #f5f7fa;
+  overflow-y: auto;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  margin: 12px 0 0 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: #303133;
+}
+
+:deep(.el-menu) {
+  border-right: none;
+}
+
+:deep(.el-menu-item) {
+  height: 48px;
+  line-height: 48px;
+}
+
+:deep(.el-menu-item.is-active) {
+  background-color: #ecf5ff;
 }
 </style>

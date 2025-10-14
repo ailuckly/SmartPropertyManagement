@@ -1,69 +1,104 @@
 <template>
-  <div class="payments-layout card">
-    <header class="header">
-      <h2>租金支付记录</h2>
-      <div class="filter-group">
-<input
-          v-model.number="filters.leaseId"
-          type="number"
-          min="1"
-          placeholder="输入租约ID"
-          class="input"
-        />
-        <button class="btn-primary" @click="fetchPayments">查询</button>
+  <div class="payments-view">
+    <el-card shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span>租金支付记录</span>
+          <div class="header-actions">
+            <el-input-number
+              v-model="filters.leaseId"
+              :min="1"
+              placeholder="输入租约ID"
+              style="width: 150px"
+            />
+            <el-button type="primary" :icon="Search" @click="fetchPayments">
+              查询
+            </el-button>
+          </div>
+        </div>
+      </template>
+
+      <!-- 登记表单（仅业主和管理员可见） -->
+      <el-form
+        v-if="isOwnerOrAdmin"
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        inline
+        size="default"
+        class="payment-form"
+        @submit.prevent="handleSubmit"
+      >
+        <el-divider content-position="left">
+          <el-icon><Money /></el-icon>
+          登记租金支付
+        </el-divider>
+
+        <el-form-item label="租约ID" prop="leaseId">
+          <el-input-number v-model="form.leaseId" :min="1" placeholder="请输入租约ID" style="width: 150px" />
+        </el-form-item>
+
+        <el-form-item label="金额(¥)" prop="amount">
+          <el-input-number v-model="form.amount" :min="0" :precision="2" placeholder="请输入金额" style="width: 150px" />
+        </el-form-item>
+
+        <el-form-item label="支付日期" prop="paymentDate">
+          <el-date-picker
+            v-model="form.paymentDate"
+            type="date"
+            placeholder="选择支付日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 180px"
+          />
+        </el-form-item>
+
+        <el-form-item label="支付方式" prop="paymentMethod">
+          <el-input v-model="form.paymentMethod" placeholder="如：银行转账" clearable style="width: 180px" />
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" native-type="submit" :loading="submitting">
+            登记
+          </el-button>
+        </el-form-item>
+
+        <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-top: 12px; width: 100%" />
+      </el-form>
+
+      <!-- 表格 -->
+      <div style="margin-top: 20px">
+        <el-table
+          :data="payments"
+          v-loading="loading"
+          stripe
+          style="width: 100%"
+          empty-text="暂无数据，请先输入租约ID查询"
+        >
+          <el-table-column prop="id" label="ID" width="60" />
+          <el-table-column prop="leaseId" label="租约ID" width="100" />
+          <el-table-column prop="amount" label="金额(¥)" width="120" align="right">
+            <template #default="{ row }">
+              <span style="color: #67C23A; font-weight: 600">¥{{ row.amount }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="paymentDate" label="支付日期" width="130" />
+          <el-table-column prop="paymentMethod" label="支付方式" width="150">
+            <template #default="{ row }">
+              <el-tag v-if="row.paymentMethod" size="small" type="info">
+                {{ row.paymentMethod }}
+              </el-tag>
+              <span v-else style="color: #909399">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdAt" label="登记时间" min-width="180">
+            <template #default="{ row }">
+              {{ formatDateTime(row.createdAt) }}
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
-    </header>
-
-    <section v-if="isOwnerOrAdmin" class="form-section">
-      <h3>登记租金支付</h3>
-      <form @submit.prevent="handleSubmit" class="form-row">
-        <div class="form-field">
-          <label for="leaseId">租约ID</label>
-          <input id="leaseId" v-model.number="form.leaseId" type="number" min="1" required />
-        </div>
-        <div class="form-field">
-          <label for="amount">金额(¥)</label>
-          <input id="amount" v-model.number="form.amount" type="number" min="0" step="0.01" required />
-        </div>
-        <div class="form-field">
-          <label for="paymentDate">支付日期</label>
-          <input id="paymentDate" v-model="form.paymentDate" type="date" required />
-        </div>
-        <div class="form-field">
-          <label for="paymentMethod">支付方式</label>
-          <input id="paymentMethod" v-model="form.paymentMethod" placeholder="如：银行转账" />
-        </div>
-        <div class="form-actions">
-          <button class="btn-primary" type="submit">登记</button>
-        </div>
-      </form>
-      <p v-if="error" class="error-msg">{{ error }}</p>
-    </section>
-
-    <div class="table-wrapper">
-      <table class="table">
-        <thead>
-          <tr>
-            <th class="id-col">ID</th>
-            <th>租约</th>
-            <th class="num">金额</th>
-            <th>支付日期</th>
-            <th>方式</th>
-            <th>登记时间</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in payments" :key="item.id">
-            <td class="id-col">{{ item.id }}</td>
-            <td>{{ item.leaseId }}</td>
-            <td class="num">{{ item.amount }}</td>
-            <td>{{ item.paymentDate }}</td>
-            <td>{{ item.paymentMethod ?? '-' }}</td>
-            <td>{{ formatDateTime(item.createdAt) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    </el-card>
   </div>
 </template>
 
@@ -71,7 +106,8 @@
 import { reactive, ref } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
-import { notify } from '../utils/notify';
+import { Search, Money } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 /**
  * Payment centre. Owners/admins can record new payments, whereas authorised viewers can filter by lease.
@@ -79,16 +115,26 @@ import { notify } from '../utils/notify';
 const authStore = useAuthStore();
 const isOwnerOrAdmin = authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']);
 
+const formRef = ref(null);
+const loading = ref(false);
+const submitting = ref(false);
+
 const filters = reactive({
-  leaseId: ''
+  leaseId: null
 });
 
 const form = reactive({
-  leaseId: '',
-  amount: '',
+  leaseId: null,
+  amount: null,
   paymentDate: '',
   paymentMethod: ''
 });
+
+const rules = {
+  leaseId: [{ required: true, message: '请输入租约ID', trigger: 'blur' }],
+  amount: [{ required: true, message: '请输入金额', trigger: 'blur' }],
+  paymentDate: [{ required: true, message: '请选择支付日期', trigger: 'change' }]
+};
 
 const payments = ref([]); // 支付记录表格数据
 const error = ref('');
@@ -98,18 +144,24 @@ const error = ref('');
  */
 const fetchPayments = async () => {
   if (!filters.leaseId) {
-    error.value = '请先输入租约ID';
+    ElMessage.warning('请先输入租约ID');
     return;
   }
+  
+  loading.value = true;
   error.value = '';
+  
   try {
     const { data } = await api.get('/payments', {
       params: { leaseId: filters.leaseId, size: 50 }
     });
     payments.value = data.content;
-    notify(`已查询到 ${data.content.length} 条记录`, 'info', 2000);
+    ElMessage.success(`已查询到 ${data.content.length} 条记录`);
   } catch (err) {
     error.value = err.response?.data?.message ?? '查询失败';
+    ElMessage.error(error.value);
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -117,23 +169,39 @@ const fetchPayments = async () => {
  * Persists a payment entry then refreshes the table so the new row is visible immediately.
  */
 const handleSubmit = async () => {
-  error.value = '';
-  try {
-    await api.post('/payments', form);
-    notify('登记成功', 'success');
-    if (!filters.leaseId) {
-      filters.leaseId = form.leaseId;
+  if (!formRef.value) return;
+  
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return;
+    
+    submitting.value = true;
+    error.value = '';
+    
+    try {
+      await api.post('/payments', form);
+      ElMessage.success('登记成功');
+      
+      if (!filters.leaseId) {
+        filters.leaseId = form.leaseId;
+      }
+      
+      fetchPayments();
+      
+      // 重置表单
+      form.leaseId = null;
+      form.amount = null;
+      form.paymentDate = '';
+      form.paymentMethod = '';
+      
+      if (formRef.value) {
+        formRef.value.resetFields();
+      }
+    } catch (err) {
+      error.value = err.response?.data?.message ?? '登记失败，请检查输入';
+    } finally {
+      submitting.value = false;
     }
-    fetchPayments();
-    Object.assign(form, {
-      leaseId: '',
-      amount: '',
-      paymentDate: '',
-      paymentMethod: ''
-    });
-  } catch (err) {
-    error.value = err.response?.data?.message ?? '登记失败，请检查输入';
-  }
+  });
 };
 
 const formatDateTime = (value) => {
@@ -146,57 +214,51 @@ const formatDateTime = (value) => {
 </script>
 
 <style scoped>
-.payments-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.payments-view {
+  padding: 0;
 }
 
-.filters { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-.header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 500;
 }
 
-.filter-group {
+.header-actions {
   display: flex;
   gap: 12px;
+  align-items: center;
 }
 
-.form-section {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 24px;
+.payment-form {
+  background-color: #f9fafb;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 12px;
+:deep(.el-divider__text) {
+  background-color: #f9fafb;
 }
 
-.form-actions {
-  grid-column: span 4;
-  display: flex;
-  justify-content: flex-end;
+:deep(.payment-form .el-form-item) {
+  margin-right: 20px;
+  margin-bottom: 16px;
 }
 
-.table-wrapper {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 12px 8px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.error-msg {
-  color: #ef4444;
+@media (max-width: 768px) {
+  .payment-form {
+    padding: 15px;
+  }
+  
+  :deep(.payment-form .el-form-item) {
+    display: block;
+    margin-right: 0;
+  }
+  
+  :deep(.payment-form .el-form-item__content) {
+    margin-left: 0 !important;
+  }
 }
 </style>

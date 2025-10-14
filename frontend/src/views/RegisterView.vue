@@ -1,64 +1,127 @@
 <template>
-  <section class="auth-card card">
-    <h2>注册新账号</h2>
-    <form @submit.prevent="handleSubmit">
-      <div class="form-field">
-        <label for="username">用户名</label>
-        <input id="username" v-model="form.username" required type="text" autocomplete="username" placeholder="3-50个字符" />
-        <small v-if="fieldErrors.username" class="field-error">{{ fieldErrors.username }}</small>
-      </div>
-      <div class="form-field">
-        <label for="email">邮箱</label>
-        <input id="email" v-model="form.email" required type="email" autocomplete="email" placeholder="name@example.com" />
-        <small v-if="fieldErrors.email" class="field-error">{{ fieldErrors.email }}</small>
-      </div>
-      <div class="form-field">
-        <label for="password">密码</label>
-        <input
-          id="password"
-          v-model="form.password"
-          required
-          type="password"
-          autocomplete="new-password"
-          placeholder="至少6个字符"
+  <div class="register-container">
+    <el-card class="register-card" shadow="hover">
+      <template #header>
+        <div class="card-header">
+          <el-icon :size="28" color="#409EFF"><Edit /></el-icon>
+          <h2>注册新账号</h2>
+        </div>
+      </template>
+      
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="90px"
+        size="large"
+        @submit.prevent="handleSubmit"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input
+            v-model="form.username"
+            placeholder="请输入3-50个字符"
+            :prefix-icon="User"
+            autocomplete="username"
+            clearable
+          />
+        </el-form-item>
+        
+        <el-form-item label="邮箱" prop="email">
+          <el-input
+            v-model="form.email"
+            type="email"
+            placeholder="name@example.com"
+            :prefix-icon="Message"
+            autocomplete="email"
+            clearable
+          />
+        </el-form-item>
+        
+        <el-form-item label="密码" prop="password">
+          <el-input
+            v-model="form.password"
+            type="password"
+            placeholder="请输入至少6个字符"
+            :prefix-icon="Lock"
+            autocomplete="new-password"
+            show-password
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="姓氏" prop="lastName">
+          <el-input
+            v-model="form.lastName"
+            placeholder="请输入姓氏（可选）"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="名字" prop="firstName">
+          <el-input
+            v-model="form.firstName"
+            placeholder="请输入名字（可选）"
+            clearable
+          />
+        </el-form-item>
+        
+        <el-form-item label="联系电话" prop="phoneNumber">
+          <el-input
+            v-model="form.phoneNumber"
+            placeholder="请输入电话号码（可选）"
+            :prefix-icon="Phone"
+            autocomplete="tel"
+            clearable
+          />
+        </el-form-item>
+
+        <el-alert
+          v-if="error"
+          :title="error"
+          type="error"
+          :closable="false"
+          show-icon
+          style="margin-bottom: 20px"
         />
-        <small v-if="fieldErrors.password" class="field-error">{{ fieldErrors.password }}</small>
+
+        <el-form-item>
+          <el-button
+            type="primary"
+            native-type="submit"
+            :loading="authStore.loading"
+            style="width: 100%"
+            size="large"
+          >
+            {{ authStore.loading ? '注册中...' : '注册并登录' }}
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <el-divider />
+
+      <div class="footer-links">
+        <span>已有账号？</span>
+        <el-link type="primary" :underline="false" @click="router.push('/login')">
+          立即登录
+        </el-link>
       </div>
-      <div class="form-field">
-        <label for="firstName">名字</label>
-        <input id="firstName" v-model="form.firstName" type="text" autocomplete="given-name" placeholder="可选" />
-      </div>
-      <div class="form-field">
-        <label for="lastName">姓氏</label>
-        <input id="lastName" v-model="form.lastName" type="text" autocomplete="family-name" placeholder="可选" />
-      </div>
-      <div class="form-field">
-        <label for="phoneNumber">联系电话</label>
-        <input id="phoneNumber" v-model="form.phoneNumber" type="tel" autocomplete="tel" placeholder="可选" />
-        <small v-if="fieldErrors.phoneNumber" class="field-error">{{ fieldErrors.phoneNumber }}</small>
-      </div>
-      <p v-if="error" class="error-msg">{{ error }}</p>
-      <button class="btn-primary" type="submit" :disabled="authStore.loading">
-        {{ authStore.loading ? '注册中...' : '注册并登录' }}
-      </button>
-    </form>
-    <p class="link-row">
-      已有账号？
-      <RouterLink to="/login">去登录</RouterLink>
-    </p>
-  </section>
+    </el-card>
+  </div>
 </template>
 
 <script setup>
 import { reactive, ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { User, Lock, Message, Phone, Edit } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 /**
  * Registration screen. Mirrors the backend validation requirements and logs in the user upon success.
  */
 const authStore = useAuthStore();
 const router = useRouter();
+const formRef = ref(null);
 
 const form = reactive({
   username: '',
@@ -69,86 +132,140 @@ const form = reactive({
   phoneNumber: ''
 });
 
-const fieldErrors = reactive({
-  username: '',
-  email: '',
-  password: '',
-  phoneNumber: ''
-});
+// 自定义邮箱验证器
+const validateEmail = (rule, value, callback) => {
+  if (!value) {
+    callback(new Error('请输入邮箱地址'));
+  } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
+    callback(new Error('请输入有效的邮箱地址'));
+  } else {
+    callback();
+  }
+};
+
+// 自定义电话验证器
+const validatePhone = (rule, value, callback) => {
+  if (value && !/^[+0-9\-\s]{0,20}$/.test(value)) {
+    callback(new Error('电话号码仅允许数字、+、-和空格'));
+  } else {
+    callback();
+  }
+};
+
+const rules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 50, message: '用户名长度为 3-50 个字符', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, validator: validateEmail, trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码至少为 6 个字符', trigger: 'blur' }
+  ],
+  phoneNumber: [
+    { validator: validatePhone, trigger: 'blur' }
+  ]
+};
 
 const error = ref('');
 
-const validate = () => {
-  fieldErrors.username = '';
-  fieldErrors.email = '';
-  fieldErrors.password = '';
-  fieldErrors.phoneNumber = '';
-
-  let ok = true;
-  if (!form.username || form.username.length < 3) {
-    fieldErrors.username = '用户名至少 3 个字符';
-    ok = false;
-  }
-  // 简单邮箱校验，后端仍会进行严格验证
-  if (!form.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
-    fieldErrors.email = '请输入有效邮箱地址';
-    ok = false;
-  }
-  if (!form.password || form.password.length < 6) {
-    fieldErrors.password = '密码至少 6 个字符';
-    ok = false;
-  }
-  if (form.phoneNumber && !/^[+0-9\-\s]{0,20}$/.test(form.phoneNumber)) {
-    fieldErrors.phoneNumber = '联系电话仅允许 +、数字、空格和连字符';
-    ok = false;
-  }
-  return ok;
-};
-
 const handleSubmit = async () => {
-  error.value = '';
-  if (!validate()) return;
-  try {
-    const payload = { ...form };
-    await authStore.register(payload);
-    router.replace('/');
-  } catch (err) {
-    // 显示后端详细校验信息（details 是一个字段->提示 的映射）
-    const details = err.response?.data?.details;
-    if (details && typeof details === 'object') {
-      for (const key of Object.keys(fieldErrors)) {
-        if (details[key]) fieldErrors[key] = String(details[key]);
+  if (!formRef.value) return;
+  
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return;
+    
+    error.value = '';
+    try {
+      const payload = { ...form };
+      await authStore.register(payload);
+      ElMessage.success('注册成功！');
+      router.replace('/');
+    } catch (err) {
+      // 显示后端详细校验信息
+      const details = err.response?.data?.details;
+      if (details && typeof details === 'object') {
+        // 将后端错误信息显示在表单字段上
+        const fieldMap = {
+          username: 'username',
+          email: 'email',
+          password: 'password',
+          phoneNumber: 'phoneNumber'
+        };
+        
+        for (const [key, field] of Object.entries(fieldMap)) {
+          if (details[key] && formRef.value && formRef.value.fields) {
+            const fieldItem = formRef.value.fields.find(f => f.prop === field);
+            if (fieldItem) {
+              fieldItem.validateState = 'error';
+              fieldItem.validateMessage = String(details[key]);
+            }
+          }
+        }
       }
+      error.value = err.response?.data?.message ?? '注册失败，请稍后再试';
     }
-    error.value = err.response?.data?.message ?? '注册失败，请稍后再试';
-  }
+  });
 };
 </script>
 
 <style scoped>
-.auth-card {
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f7fa;
+  padding: 40px 20px;
+}
+
+.register-card {
+  width: 100%;
   max-width: 560px;
-  margin: 56px auto;
 }
 
-.auth-card h2 {
-  margin-top: 0;
-  margin-bottom: 16px;
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
-.error-msg {
-  color: #ef4444;
-  margin-bottom: 12px;
+.card-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #303133;
+  font-weight: 500;
 }
 
-.link-row {
-  margin-top: 16px;
+.footer-links {
   text-align: center;
-  color: #1e293b;
+  color: #606266;
+  font-size: 14px;
 }
 
-.link-row a {
-  color: #2563eb;
+.footer-links span {
+  margin-right: 8px;
 }
-.field-error { color: #ef4444; font-size: 12px; }
+
+:deep(.el-card__header) {
+  padding: 20px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ebeef5;
+}
+
+:deep(.el-card__body) {
+  padding: 30px;
+}
+
+:deep(.el-form-item) {
+  margin-bottom: 20px;
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #606266;
+}
 </style>

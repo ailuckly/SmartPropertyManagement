@@ -1,36 +1,70 @@
 <template>
   <div class="dashboard">
-    <section class="grid">
-      <article class="card stat-card">
-        <span class="label">物业数量</span>
-        <strong>{{ stats.properties }}</strong>
-      </article>
-      <article class="card stat-card">
-        <span class="label">租约数量</span>
-        <strong>{{ stats.leases }}</strong>
-      </article>
-      <article class="card stat-card">
-        <span class="label">待处理维修</span>
-        <strong>{{ stats.pendingMaintenances }}</strong>
-      </article>
-    </section>
+    <el-row :gutter="20" v-loading="loading">
+      <el-col :xs="24" :sm="8">
+        <el-card shadow="hover" class="stat-card">
+          <el-statistic title="物业数量" :value="stats.properties">
+            <template #prefix>
+              <el-icon style="color: #409EFF">
+                <OfficeBuilding />
+              </el-icon>
+            </template>
+          </el-statistic>
+        </el-card>
+      </el-col>
+      
+      <el-col :xs="24" :sm="8">
+        <el-card shadow="hover" class="stat-card">
+          <el-statistic title="租约数量" :value="stats.leases">
+            <template #prefix>
+              <el-icon style="color: #67C23A">
+                <Document />
+              </el-icon>
+            </template>
+          </el-statistic>
+        </el-card>
+      </el-col>
+      
+      <el-col :xs="24" :sm="8">
+        <el-card shadow="hover" class="stat-card">
+          <el-statistic title="待处理维修" :value="stats.pendingMaintenances">
+            <template #prefix>
+              <el-icon style="color: #E6A23C">
+                <Tools />
+              </el-icon>
+            </template>
+          </el-statistic>
+        </el-card>
+      </el-col>
+    </el-row>
 
-    <section class="card welcome-card">
-      <h2>欢迎回来</h2>
-      <p>在这里可以集中管理物业、租约、缴费和维修申请。</p>
-      <ul>
-        <li>使用导航栏快速进入模块</li>
-        <li>管理员/业主可登记物业与租约</li>
-        <li>租户可在线提交维修申请并追踪进度</li>
-      </ul>
-    </section>
+    <el-card shadow="never" class="welcome-card" style="margin-top: 20px">
+      <template #header>
+        <div class="card-header">
+          <el-icon :size="20" color="#409EFF"><InfoFilled /></el-icon>
+          <span>欢迎使用智慧物业管理平台</span>
+        </div>
+      </template>
+      <el-descriptions :column="1" border>
+        <el-descriptions-item label="快速导航">
+          使用左侧导航栏可快速进入各个功能模块
+        </el-descriptions-item>
+        <el-descriptions-item label="管理员/业主">
+          可以登记物业信息、创建租约、管理收支记录
+        </el-descriptions-item>
+        <el-descriptions-item label="租户">
+          可以在线提交维修申请并实时追踪处理进度
+        </el-descriptions-item>
+      </el-descriptions>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue';
+import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
+import { OfficeBuilding, Document, Tools, InfoFilled } from '@element-plus/icons-vue';
 
 /**
  * Lightweight dashboard that pulls high-level counts for properties, leases and maintenance requests.
@@ -42,12 +76,14 @@ const stats = reactive({
   pendingMaintenances: 0
 });
 
+const loading = ref(false);
 const authStore = useAuthStore();
 
 /**
  * Aggregates counts from several endpoints. Failures are tolerated so the page still renders partial data.
  */
 const fetchStats = async () => {
+  loading.value = true;
   try {
     const [propertiesResponse, leasesResponse, maintenanceResponse] = await Promise.all([
       api.get('/properties', { params: { size: 1 } }).catch(() => null),
@@ -73,6 +109,8 @@ const fetchStats = async () => {
     }
   } catch (error) {
     console.error('加载仪表盘数据失败', error);
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -85,42 +123,39 @@ onMounted(() => {
 
 <style scoped>
 .dashboard {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  padding: 0;
 }
 
 .stat-card {
-  text-align: center;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #fff;
-  padding: 24px;
+  transition: transform 0.3s;
 }
 
-.stat-card .label {
+.stat-card:hover {
+  transform: translateY(-4px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+:deep(.el-statistic__head) {
   font-size: 14px;
-  opacity: 0.9;
+  color: #909399;
+  margin-bottom: 8px;
 }
 
-.stat-card strong {
-  display: block;
-  margin-top: 12px;
-  font-size: 32px;
-  font-weight: 700;
+:deep(.el-statistic__number) {
+  font-size: 28px;
+  font-weight: 600;
+  color: #303133;
 }
 
-.welcome-card h2 {
-  margin-top: 0;
-}
-
-.welcome-card ul {
-  padding-left: 18px;
-  color: #334155;
+:deep(.el-descriptions__label) {
+  font-weight: 500;
+  width: 120px;
 }
 </style>

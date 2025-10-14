@@ -1,135 +1,183 @@
 <template>
-  <div class="layout">
-    <section class="card form-card">
-      <header>
-        <h2>{{ editingId ? '更新物业' : '新增物业' }}</h2>
-        <button v-if="editingId" class="link-btn" @click="resetForm">切换到新增</button>
-      </header>
-      <form @submit.prevent="handleSubmit" class="grid-form">
-        <div class="form-field" v-if="isAdmin">
-          <label for="ownerId">业主用户ID</label>
-          <input id="ownerId" v-model.number="form.ownerId" type="number" min="1" placeholder="必填" />
-        </div>
-        <div class="form-field">
-          <label for="address">详细地址</label>
-          <input id="address" v-model="form.address" required />
-        </div>
-        <div class="form-field">
-          <label for="city">城市</label>
-          <input id="city" v-model="form.city" />
-        </div>
-        <div class="form-field">
-          <label for="state">省/州</label>
-          <input id="state" v-model="form.state" />
-        </div>
-        <div class="form-field">
-          <label for="zipCode">邮编</label>
-          <input id="zipCode" v-model="form.zipCode" />
-        </div>
-        <div class="form-field">
-          <label for="propertyType">物业类型</label>
-          <select id="propertyType" v-model="form.propertyType" required>
-            <option disabled value="">请选择</option>
-            <option value="APARTMENT">公寓</option>
-            <option value="HOUSE">独栋</option>
-            <option value="COMMERCIAL">商用</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label for="bedrooms">卧室数量</label>
-          <input id="bedrooms" v-model.number="form.bedrooms" type="number" min="0" />
-        </div>
-        <div class="form-field">
-          <label for="bathrooms">卫生间数量</label>
-          <input id="bathrooms" v-model.number="form.bathrooms" type="number" step="0.5" min="0" />
-        </div>
-        <div class="form-field">
-          <label for="squareFootage">面积(㎡)</label>
-          <input id="squareFootage" v-model.number="form.squareFootage" type="number" min="0" />
-        </div>
-        <div class="form-field">
-          <label for="rentAmount">月租(¥)</label>
-          <input id="rentAmount" v-model.number="form.rentAmount" type="number" min="0" step="0.01" />
-        </div>
-        <div class="form-field">
-          <label for="status">状态</label>
-          <select id="status" v-model="form.status">
-            <option value="AVAILABLE">可出租</option>
-            <option value="LEASED">已出租</option>
-            <option value="UNDER_MAINTENANCE">维护中</option>
-          </select>
-        </div>
-        <div class="form-actions">
-          <button class="btn-primary" type="submit">
-            {{ editingId ? '保存修改' : '创建物业' }}
-          </button>
-        </div>
-      </form>
-      <p v-if="error" class="error-msg">{{ error }}</p>
-    </section>
+  <div class="properties-view">
+    <el-row :gutter="20">
+      <!-- 表单卡片 -->
+      <el-col :xs="24" :lg="8">
+        <el-card shadow="never">
+          <template #header>
+            <div class="card-header">
+              <span>{{ editingId ? '更新物业' : '新增物业' }}</span>
+              <el-button v-if="editingId" link type="primary" @click="resetForm">
+                <el-icon><RefreshLeft /></el-icon>
+                切换到新增
+              </el-button>
+            </div>
+          </template>
 
-    <section class="card">
-      <header class="table-header">
-        <h2>物业列表</h2>
-        <div class="filters">
-<input v-model="filters.city" placeholder="城市" class="input" />
-<select v-model="filters.status" class="input">
-            <option value="">所有状态</option>
-            <option value="AVAILABLE">可出租</option>
-            <option value="LEASED">已出租</option>
-            <option value="UNDER_MAINTENANCE">维护中</option>
-          </select>
-          <button class="btn-primary" @click="applyFilters">筛选</button>
-<button class="btn-link" @click="clearFilters">清空</button>
-          <div class="pagination">
-<button class="btn" :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">上一页</button>
-            <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
-<button class="btn" :disabled="pagination.page + 1 >= pagination.totalPages" @click="changePage(pagination.page + 1)">下一页</button>
+          <el-form
+            ref="formRef"
+            :model="form"
+            :rules="rules"
+            label-width="100px"
+            size="default"
+            @submit.prevent="handleSubmit"
+          >
+            <el-form-item v-if="isAdmin" label="业主用户ID" prop="ownerId">
+              <el-input-number
+                v-model="form.ownerId"
+                :min="1"
+                placeholder="请输入业主用户ID"
+                style="width: 100%"
+              />
+            </el-form-item>
+
+            <el-form-item label="详细地址" prop="address">
+              <el-input v-model="form.address" placeholder="请输入详细地址" clearable />
+            </el-form-item>
+
+            <el-form-item label="城市" prop="city">
+              <el-input v-model="form.city" placeholder="请输入城市" clearable />
+            </el-form-item>
+
+            <el-form-item label="省/州" prop="state">
+              <el-input v-model="form.state" placeholder="请输入省/州" clearable />
+            </el-form-item>
+
+            <el-form-item label="邮编" prop="zipCode">
+              <el-input v-model="form.zipCode" placeholder="请输入邮编" clearable />
+            </el-form-item>
+
+            <el-form-item label="物业类型" prop="propertyType">
+              <el-select v-model="form.propertyType" placeholder="请选择物业类型" style="width: 100%">
+                <el-option label="公寓" value="APARTMENT" />
+                <el-option label="独栋" value="HOUSE" />
+                <el-option label="商用" value="COMMERCIAL" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="卧室数量" prop="bedrooms">
+              <el-input-number v-model="form.bedrooms" :min="0" style="width: 100%" />
+            </el-form-item>
+
+            <el-form-item label="卫生间数量" prop="bathrooms">
+              <el-input-number v-model="form.bathrooms" :min="0" :step="0.5" style="width: 100%" />
+            </el-form-item>
+
+            <el-form-item label="面积(㎡)" prop="squareFootage">
+              <el-input-number v-model="form.squareFootage" :min="0" style="width: 100%" />
+            </el-form-item>
+
+            <el-form-item label="月租(¥)" prop="rentAmount">
+              <el-input-number v-model="form.rentAmount" :min="0" :precision="2" style="width: 100%" />
+            </el-form-item>
+
+            <el-form-item label="状态" prop="status">
+              <el-select v-model="form.status" style="width: 100%">
+                <el-option label="可出租" value="AVAILABLE" />
+                <el-option label="已出租" value="LEASED" />
+                <el-option label="维护中" value="UNDER_MAINTENANCE" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item>
+              <el-button type="primary" native-type="submit" :loading="submitting" style="width: 100%">
+                {{ editingId ? '保存修改' : '创建物业' }}
+              </el-button>
+            </el-form-item>
+          </el-form>
+
+          <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-top: 12px" />
+        </el-card>
+      </el-col>
+
+      <!-- 列表卡片 -->
+      <el-col :xs="24" :lg="16">
+        <el-card shadow="never">
+          <template #header>
+            <div class="card-header">
+              <span>物业列表</span>
+            </div>
+          </template>
+
+          <!-- 筛选工具栏 -->
+          <div class="filter-bar">
+            <el-input v-model="filters.city" placeholder="按城市筛选" clearable style="width: 150px" />
+            <el-select v-model="filters.status" placeholder="按状态筛选" clearable style="width: 150px">
+              <el-option label="可出租" value="AVAILABLE" />
+              <el-option label="已出租" value="LEASED" />
+              <el-option label="维护中" value="UNDER_MAINTENANCE" />
+            </el-select>
+            <el-button type="primary" :icon="Search" @click="applyFilters">筛选</el-button>
+            <el-button :icon="RefreshLeft" @click="clearFilters">清空</el-button>
           </div>
-        </div>
-      </header>
-      <div class="table-wrapper" v-if="!loading">
-        <table class="table">
-          <thead>
-            <tr>
-              <th class="id-col">ID</th>
-              <th>地址</th>
-              <th>类型</th>
-              <th class="num">租金</th>
-              <th>状态</th>
-              <th>业主</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in properties" :key="item.id">
-              <td class="id-col">{{ item.id }}</td>
-              <td>
+
+          <!-- 表格 -->
+          <el-table
+            :data="properties"
+            v-loading="loading"
+            stripe
+            style="width: 100%; margin-top: 16px"
+          >
+            <el-table-column prop="id" label="ID" width="60" />
+            <el-table-column label="地址" min-width="200">
+              <template #default="{ row }">
                 <div class="address-cell">
-                  <strong>{{ item.address }}</strong>
-                  <small>{{ item.city }} {{ item.state }} {{ item.zipCode }}</small>
+                  <div class="address-main">{{ row.address }}</div>
+                  <div class="address-sub">{{ row.city }} {{ row.state }} {{ row.zipCode }}</div>
                 </div>
-              </td>
-              <td>{{ renderType(item.propertyType) }}</td>
-              <td class="num">{{ item.rentAmount ?? '-' }}</td>
-              <td><span :class="['status-pill', item.status.toLowerCase()]">{{ renderStatus(item.status) }}</span></td>
-              <td>{{ item.ownerUsername ?? '-' }}</td>
-              <td class="actions">
-                <button @click="startEdit(item)">编辑</button>
-                <button class="danger" @click="remove(item.id)">删除</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-else class="card empty-card">
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px;"></div>
-      </div>
-    </section>
+              </template>
+            </el-table-column>
+            <el-table-column prop="propertyType" label="类型" width="100">
+              <template #default="{ row }">
+                {{ renderType(row.propertyType) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="rentAmount" label="租金(¥)" width="110" align="right">
+              <template #default="{ row }">
+                {{ row.rentAmount ?? '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.status)" size="small">
+                  {{ renderStatus(row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="ownerUsername" label="业主" width="110">
+              <template #default="{ row }">
+                {{ row.ownerUsername ?? '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="150" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="primary" size="small" @click="startEdit(row)">
+                  <el-icon><Edit /></el-icon>
+                  编辑
+                </el-button>
+                <el-button link type="danger" size="small" @click="remove(row.id)">
+                  <el-icon><Delete /></el-icon>
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              v-model:current-page="pagination.page"
+              v-model:page-size="pagination.size"
+              :total="pagination.total"
+              :page-sizes="[10, 20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              @current-change="handlePageChange"
+              @size-change="handleSizeChange"
+            />
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -137,19 +185,23 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
+import { Search, RefreshLeft, Edit, Delete } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 /**
  * This view combines a property editor (admins/owners) and a paginated table shared by all authenticated roles.
  * Form state lives in reactive objects to simplify reset logic after submission or cancellation.
  */
 const authStore = useAuthStore();
+const formRef = ref(null);
 const properties = ref([]); // 表格数据源
 const loading = ref(false);
+const submitting = ref(false);
 const filters = reactive({ city: '', status: '' });
 const pagination = reactive({
-  page: 0,
+  page: 1,
   size: 10,
-  totalPages: 1
+  total: 0
 });
 
 const form = reactive({
@@ -166,7 +218,12 @@ const form = reactive({
   status: 'AVAILABLE'
 });
 
-const editingId = ref(null); // null 表示当前为“新增”模式
+const rules = {
+  address: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
+  propertyType: [{ required: true, message: '请选择物业类型', trigger: 'change' }]
+};
+
+const editingId = ref(null); // null 表示当前为"新增"模式
 const error = ref('');
 
 const isAdmin = authStore.hasAnyRole(['ROLE_ADMIN']);
@@ -178,10 +235,17 @@ const fetchProperties = async () => {
   loading.value = true;
   try {
     const { data } = await api.get('/properties', {
-      params: { page: pagination.page, size: pagination.size, city: filters.city || undefined, status: filters.status || undefined }
+      params: { 
+        page: pagination.page - 1, // Element UI 分页从 1 开始，后端从 0 开始
+        size: pagination.size, 
+        city: filters.city || undefined, 
+        status: filters.status || undefined 
+      }
     });
     properties.value = data.content;
-    pagination.totalPages = Math.max(data.totalPages, 1);
+    pagination.total = data.totalElements || 0;
+  } catch (err) {
+    ElMessage.error('加载物业列表失败');
   } finally {
     loading.value = false;
   }
@@ -192,6 +256,9 @@ const fetchProperties = async () => {
  */
 const resetForm = () => {
   editingId.value = null;
+  if (formRef.value) {
+    formRef.value.resetFields();
+  }
   Object.assign(form, {
     ownerId: isAdmin ? '' : authStore.user?.id ?? '',
     address: '',
@@ -212,32 +279,44 @@ const resetForm = () => {
  * Sends either a create or update request depending on the presence of {@code editingId}.
  */
 const handleSubmit = async () => {
-  try {
+  if (!formRef.value) return;
+  
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return;
+    
+    submitting.value = true;
     error.value = '';
-    const payload = { ...form };
-    if (!isAdmin) {
-      payload.ownerId = null;
-    }
-    if (!payload.squareFootage) {
-      payload.squareFootage = null;
-    }
-    if (!payload.bedrooms) {
-      payload.bedrooms = null;
-    }
-    if (!payload.bathrooms) {
-      payload.bathrooms = null;
-    }
+    
+    try {
+      const payload = { ...form };
+      if (!isAdmin) {
+        payload.ownerId = null;
+      }
+      if (!payload.squareFootage) {
+        payload.squareFootage = null;
+      }
+      if (!payload.bedrooms) {
+        payload.bedrooms = null;
+      }
+      if (!payload.bathrooms) {
+        payload.bathrooms = null;
+      }
 
-    if (editingId.value) {
-      await api.put(`/properties/${editingId.value}`, payload);
-    } else {
-      await api.post('/properties', payload);
+      if (editingId.value) {
+        await api.put(`/properties/${editingId.value}`, payload);
+        ElMessage.success('物业更新成功');
+      } else {
+        await api.post('/properties', payload);
+        ElMessage.success('物业创建成功');
+      }
+      resetForm();
+      fetchProperties();
+    } catch (err) {
+      error.value = err.response?.data?.message ?? '保存失败，请检查输入信息';
+    } finally {
+      submitting.value = false;
     }
-    resetForm();
-    fetchProperties();
-  } catch (err) {
-    error.value = err.response?.data?.message ?? '保存失败，请检查输入信息';
-  }
+  });
 };
 
 /**
@@ -258,19 +337,39 @@ const startEdit = (item) => {
     rentAmount: item.rentAmount,
     status: item.status
   });
+  // 滚动到表单顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 /**
  * Removes a property after explicit confirmation from the user.
  */
 const remove = async (id) => {
-  if (!confirm('确认删除该物业？')) return;
-  await api.delete(`/properties/${id}`);
+  try {
+    await ElMessageBox.confirm('确认删除该物业？此操作不可撤销。', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    
+    await api.delete(`/properties/${id}`);
+    ElMessage.success('删除成功');
+    fetchProperties();
+  } catch (err) {
+    if (err !== 'cancel') {
+      ElMessage.error('删除失败');
+    }
+  }
+};
+
+const handlePageChange = (page) => {
+  pagination.page = page;
   fetchProperties();
 };
 
-const changePage = (page) => {
-  pagination.page = page;
+const handleSizeChange = (size) => {
+  pagination.size = size;
+  pagination.page = 1;
   fetchProperties();
 };
 
@@ -300,8 +399,30 @@ const renderStatus = (status) => {
   }
 };
 
-const applyFilters = () => { pagination.page = 0; fetchProperties(); };
-const clearFilters = () => { filters.city = ''; filters.status = ''; pagination.page = 0; fetchProperties(); };
+const getStatusType = (status) => {
+  switch (status) {
+    case 'AVAILABLE':
+      return 'success';
+    case 'LEASED':
+      return 'primary';
+    case 'UNDER_MAINTENANCE':
+      return 'warning';
+    default:
+      return 'info';
+  }
+};
+
+const applyFilters = () => { 
+  pagination.page = 1; 
+  fetchProperties(); 
+};
+
+const clearFilters = () => { 
+  filters.city = ''; 
+  filters.status = ''; 
+  pagination.page = 1; 
+  fetchProperties(); 
+};
 
 onMounted(() => {
   if (!isAdmin && authStore.user) {
@@ -312,130 +433,48 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.layout {
-  display: grid;
-  grid-template-columns: 400px 1fr;
-  gap: 24px;
+.properties-view {
+  padding: 0;
 }
 
-@media (max-width: 1080px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-.form-card header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 500;
 }
 
-.link-btn {
-  background: none;
-  border: none;
-  color: #2563eb;
-  cursor: pointer;
-}
-
-.grid-form {
-  display: grid;
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  grid-template-columns: repeat(2, 1fr);
+  align-items: center;
 }
 
-.grid-form .form-field:nth-child(odd) {
-  margin-right: 8px;
+.address-cell {
+  line-height: 1.5;
 }
 
-.grid-form .form-field:nth-child(even) {
-  margin-left: 8px;
+.address-main {
+  font-weight: 500;
+  color: #303133;
 }
 
-.grid-form .form-field:nth-child(odd),
-.grid-form .form-field:nth-child(even) {
-  min-width: 0;
+.address-sub {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
 }
 
-.grid-form .form-field:nth-last-child(-n + 2) {
-  grid-column: span 2;
-}
-
-.form-actions {
-  grid-column: span 2;
+.pagination-wrapper {
   display: flex;
   justify-content: flex-end;
+  margin-top: 16px;
 }
 
-.error-msg {
-  color: #ef4444;
-  margin-top: 12px;
-}
-
-.filters { display:flex; flex-wrap: wrap; gap: 8px; align-items:center; }
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 12px 8px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-}
-
-.address-cell strong {
-  display: block;
-}
-
-.address-cell small {
-  color: #64748b;
-}
-
-.actions button {
-  margin-right: 8px;
-  padding: 4px 8px;
-}
-
-.actions .danger {
-  color: #ef4444;
-  border: 1px solid #ef4444;
-  background: none;
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: #fff;
-}
-
-.status-pill.available {
-  background: #22c55e;
-}
-
-.status-pill.leased {
-  background: #2563eb;
-}
-
-.status-pill.under_maintenance {
-  background: #f97316;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+@media (max-width: 1200px) {
+  :deep(.el-col) {
+    margin-bottom: 20px;
+  }
 }
 </style>

@@ -1,102 +1,145 @@
 <template>
-  <div :class="['maintenance-layout', { 'single-column': !isTenant }]">
-    <section v-if="isTenant" class="card form-card">
-      <h2>提交维修申请</h2>
-      <form @submit.prevent="handleSubmit">
-        <div class="form-field">
-          <label for="propertyId">物业ID</label>
-          <input id="propertyId" v-model.number="form.propertyId" type="number" min="1" required />
-        </div>
-        <div class="form-field">
-          <label for="description">问题描述</label>
-          <textarea
-            id="description"
-            v-model="form.description"
-            required
-            rows="4"
-            placeholder="请尽量描述清楚问题、影响范围与紧急程度"
-          ></textarea>
-        </div>
-        <button class="btn-primary" type="submit">提交申请</button>
-        <p v-if="error" class="error-msg">{{ error }}</p>
-      </form>
-    </section>
+  <div class="maintenance-view">
+    <el-row :gutter="20">
+      <!-- 表单卡片（仅租户可见） -->
+      <el-col v-if="isTenant" :xs="24" :lg="8">
+        <el-card shadow="never">
+          <template #header>
+            <div class="card-header">
+              <el-icon><Tools /></el-icon>
+              <span>提交维修申请</span>
+            </div>
+          </template>
 
-    <section class="card">
-      <header class="table-header">
-        <h2>维修请求列表</h2>
-        <div class="filters">
-<select v-model="filters.status" class="input">
-            <option value="">所有状态</option>
-            <option value="PENDING">待处理</option>
-            <option value="IN_PROGRESS">处理中</option>
-            <option value="COMPLETED">已完成</option>
-            <option value="CANCELLED">已取消</option>
-          </select>
-<input v-model.number="filters.propertyId" type="number" min="1" placeholder="物业ID" class="input" />
-          <button class="btn-primary" @click="applyFilters">筛选</button>
-<button class="btn-link" @click="clearFilters">清空</button>
-          <div class="pagination">
-<button class="btn" :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">
-            上一页
-          </button>
-          <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
-<button class="btn"
-            :disabled="pagination.page + 1 >= pagination.totalPages"
-            @click="changePage(pagination.page + 1)"
+          <el-form
+            ref="formRef"
+            :model="form"
+            :rules="rules"
+            label-width="90px"
+            size="default"
+            @submit.prevent="handleSubmit"
           >
-            下一页
-          </button>
-        </div>
-        </div>
-      </header>
-      <div class="table-wrapper" v-if="!loading">
-        <table class="table">
-          <thead>
-            <tr>
-              <th class="id-col">ID</th>
-              <th>物业</th>
-              <th>租客</th>
-              <th>描述</th>
-              <th>状态</th>
-              <th>上报时间</th>
-              <th v-if="isOwnerOrAdmin">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in requests" :key="item.id">
-              <td class="id-col">{{ item.id }}</td>
-              <td>
-                <div class="address-cell">
-                  <strong>#{{ item.propertyId }}</strong>
-                  <small>{{ item.propertyAddress }}</small>
+            <el-form-item label="物业ID" prop="propertyId">
+              <el-input-number
+                v-model="form.propertyId"
+                :min="1"
+                placeholder="请输入物业ID"
+                style="width: 100%"
+              />
+            </el-form-item>
+
+            <el-form-item label="问题描述" prop="description">
+              <el-input
+                v-model="form.description"
+                type="textarea"
+                :rows="6"
+                placeholder="请尽量描述清楚问题、影响范围与紧急程度"
+                maxlength="500"
+                show-word-limit
+              />
+            </el-form-item>
+
+            <el-form-item>
+              <el-button type="primary" native-type="submit" :loading="submitting" style="width: 100%">
+                提交申请
+              </el-button>
+            </el-form-item>
+          </el-form>
+
+          <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-top: 12px" />
+        </el-card>
+      </el-col>
+
+      <!-- 列表卡片 -->
+      <el-col :xs="24" :lg="isTenant ? 16 : 24">
+        <el-card shadow="never">
+          <template #header>
+            <div class="card-header">
+              <span>维修请求列表</span>
+            </div>
+          </template>
+
+          <!-- 筛选工具栏 -->
+          <div class="filter-bar">
+            <el-select v-model="filters.status" placeholder="按状态筛选" clearable style="width: 150px">
+              <el-option label="待处理" value="PENDING" />
+              <el-option label="处理中" value="IN_PROGRESS" />
+              <el-option label="已完成" value="COMPLETED" />
+              <el-option label="已取消" value="CANCELLED" />
+            </el-select>
+            <el-input-number
+              v-model="filters.propertyId"
+              :min="1"
+              placeholder="按物业ID筛选"
+              clearable
+              style="width: 150px"
+            />
+            <el-button type="primary" :icon="Search" @click="applyFilters">筛选</el-button>
+            <el-button :icon="RefreshLeft" @click="clearFilters">清空</el-button>
+          </div>
+
+          <!-- 表格 -->
+          <el-table
+            :data="requests"
+            v-loading="loading"
+            stripe
+            style="width: 100%; margin-top: 16px"
+          >
+            <el-table-column prop="id" label="ID" width="60" />
+            <el-table-column label="物业" min-width="180">
+              <template #default="{ row }">
+                <div class="property-cell">
+                  <div class="property-id">#{{ row.propertyId }}</div>
+                  <div class="property-address">{{ row.propertyAddress }}</div>
                 </div>
-              </td>
-              <td>{{ item.tenantUsername }}</td>
-              <td>{{ item.description }}</td>
-              <td>
-                <span :class="['status-pill', item.status.toLowerCase()]">{{ renderStatus(item.status) }}</span>
-              </td>
-              <td>{{ formatDate(item.reportedAt) }}</td>
-              <td v-if="isOwnerOrAdmin" class="actions">
-                <select v-model="item.status" @change="updateStatus(item)">
-                  <option value="PENDING">待处理</option>
-                  <option value="IN_PROGRESS">处理中</option>
-                  <option value="COMPLETED">已完成</option>
-                  <option value="CANCELLED">已取消</option>
-                </select>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-else class="card" style="padding:12px;">
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
-        <div class="skeleton" style="height:16px;"></div>
-      </div>
-    </section>
+              </template>
+            </el-table-column>
+            <el-table-column prop="tenantUsername" label="租客" width="100" />
+            <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="status" label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.status)" size="small">
+                  {{ renderStatus(row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="reportedAt" label="上报时间" width="160">
+              <template #default="{ row }">
+                {{ formatDate(row.reportedAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column v-if="isOwnerOrAdmin" label="操作" width="150" fixed="right">
+              <template #default="{ row }">
+                <el-select
+                  v-model="row.status"
+                  size="small"
+                  @change="updateStatus(row)"
+                  style="width: 120px"
+                >
+                  <el-option label="待处理" value="PENDING" />
+                  <el-option label="处理中" value="IN_PROGRESS" />
+                  <el-option label="已完成" value="COMPLETED" />
+                  <el-option label="已取消" value="CANCELLED" />
+                </el-select>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              v-model:current-page="pagination.page"
+              v-model:page-size="pagination.size"
+              :total="pagination.total"
+              :page-sizes="[10, 20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              @current-change="handlePageChange"
+              @size-change="handleSizeChange"
+            />
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -104,7 +147,8 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
-import { notify } from '../utils/notify';
+import { Search, RefreshLeft, Tools } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 /**
  * Maintenance centre: tenants can submit requests while owners/admins can track and update ticket status.
@@ -113,19 +157,29 @@ const authStore = useAuthStore();
 const isTenant = authStore.hasAnyRole(['ROLE_TENANT']);
 const isOwnerOrAdmin = authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']);
 
+const formRef = ref(null);
+const requests = ref([]);
+const loading = ref(false);
+const submitting = ref(false);
+const filters = reactive({ status: '', propertyId: null });
+const pagination = reactive({
+  page: 1,
+  size: 10,
+  total: 0
+});
+
 const form = reactive({
-  propertyId: '',
+  propertyId: null,
   description: ''
 });
 
-const requests = ref([]); // 表格行数据
-const loading = ref(false);
-const filters = reactive({ status: '', propertyId: '' });
-const pagination = reactive({
-  page: 0,
-  size: 10,
-  totalPages: 1
-});
+const rules = {
+  propertyId: [{ required: true, message: '请输入物业ID', trigger: 'blur' }],
+  description: [
+    { required: true, message: '请输入问题描述', trigger: 'blur' },
+    { min: 10, message: '问题描述至少需要10个字符', trigger: 'blur' }
+  ]
+};
 
 const error = ref('');
 
@@ -136,10 +190,17 @@ const fetchRequests = async () => {
   loading.value = true;
   try {
     const { data } = await api.get('/maintenance-requests', {
-      params: { page: pagination.page, size: pagination.size, status: filters.status || undefined, propertyId: filters.propertyId || undefined }
+      params: {
+        page: pagination.page - 1,
+        size: pagination.size,
+        status: filters.status || undefined,
+        propertyId: filters.propertyId || undefined
+      }
     });
     requests.value = data.content;
-    pagination.totalPages = Math.max(data.totalPages, 1);
+    pagination.total = data.totalElements || 0;
+  } catch (err) {
+    ElMessage.error('加载维修请求列表失败');
   } finally {
     loading.value = false;
   }
@@ -149,16 +210,29 @@ const fetchRequests = async () => {
  * Tenant submission handler. Returns the user to a clean form on success.
  */
 const handleSubmit = async () => {
-  error.value = '';
-  try {
-    await api.post('/maintenance-requests', form);
-    form.propertyId = '';
-    form.description = '';
-    notify('提交成功', 'success');
-    fetchRequests();
-  } catch (err) {
-    error.value = err.response?.data?.message ?? '提交失败，请稍后再试';
-  }
+  if (!formRef.value) return;
+  
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return;
+    
+    submitting.value = true;
+    error.value = '';
+    
+    try {
+      await api.post('/maintenance-requests', form);
+      ElMessage.success('维修申请提交成功');
+      form.propertyId = null;
+      form.description = '';
+      if (formRef.value) {
+        formRef.value.resetFields();
+      }
+      fetchRequests();
+    } catch (err) {
+      error.value = err.response?.data?.message ?? '提交失败，请稍后再试';
+    } finally {
+      submitting.value = false;
+    }
+  });
 };
 
 /**
@@ -167,17 +241,33 @@ const handleSubmit = async () => {
 const updateStatus = async (item) => {
   try {
     await api.patch(`/maintenance-requests/${item.id}/status`, { status: item.status });
+    ElMessage.success('状态更新成功');
   } catch (err) {
-    notify(err.response?.data?.message ?? '更新失败', 'error');
+    ElMessage.error(err.response?.data?.message ?? '更新失败');
     fetchRequests();
   }
 };
 
-const applyFilters = () => { pagination.page = 0; fetchRequests(); };
-const clearFilters = () => { filters.status=''; filters.propertyId=''; pagination.page = 0; fetchRequests(); };
-
-const changePage = (page) => {
+const handlePageChange = (page) => {
   pagination.page = page;
+  fetchRequests();
+};
+
+const handleSizeChange = (size) => {
+  pagination.size = size;
+  pagination.page = 1;
+  fetchRequests();
+};
+
+const applyFilters = () => {
+  pagination.page = 1;
+  fetchRequests();
+};
+
+const clearFilters = () => {
+  filters.status = '';
+  filters.propertyId = null;
+  pagination.page = 1;
   fetchRequests();
 };
 
@@ -196,6 +286,21 @@ const renderStatus = (status) => {
   }
 };
 
+const getStatusType = (status) => {
+  switch (status) {
+    case 'PENDING':
+      return 'warning';
+    case 'IN_PROGRESS':
+      return 'primary';
+    case 'COMPLETED':
+      return 'success';
+    case 'CANCELLED':
+      return 'info';
+    default:
+      return 'info';
+  }
+};
+
 const formatDate = (value) => {
   if (!value) return '-';
   return new Intl.DateTimeFormat('zh-CN', {
@@ -204,84 +309,54 @@ const formatDate = (value) => {
   }).format(new Date(value));
 };
 
-onMounted(fetchRequests);
+onMounted(() => {
+  fetchRequests();
+});
 </script>
 
 <style scoped>
-.maintenance-layout {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 24px;
+.maintenance-view {
+  padding: 0;
 }
 
-@media (max-width: 1024px) {
-  .maintenance-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* When没有租户提交面板时，列表占满整行 */
-.maintenance-layout.single-column {
-  grid-template-columns: 1fr;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 12px 8px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: #fff;
-}
-
-.status-pill.pending {
-  background: #f97316;
-}
-
-.status-pill.in_progress {
-  background: #2563eb;
-}
-
-.status-pill.completed {
-  background: #22c55e;
-}
-
-.status-pill.cancelled {
-  background: #94a3b8;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.pagination {
+.card-header {
   display: flex;
   align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+  align-items: center;
 }
 
-.actions select {
-  padding: 4px 6px;
+.property-cell {
+  line-height: 1.5;
 }
 
-.error-msg {
-  color: #ef4444;
-  margin-top: 12px;
+.property-id {
+  font-weight: 500;
+  color: #303133;
+}
+
+.property-address {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+@media (max-width: 1200px) {
+  :deep(.el-col) {
+    margin-bottom: 20px;
+  }
 }
 </style>
