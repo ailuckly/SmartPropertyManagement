@@ -3,11 +3,12 @@
     <header class="header">
       <h2>租金支付记录</h2>
       <div class="filter-group">
-        <input
+<input
           v-model.number="filters.leaseId"
           type="number"
           min="1"
           placeholder="输入租约ID"
+          class="input"
         />
         <button class="btn-primary" @click="fetchPayments">查询</button>
       </div>

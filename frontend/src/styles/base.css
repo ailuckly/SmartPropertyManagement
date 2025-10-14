@@ -233,6 +233,31 @@ button:focus-visible,
   cursor: not-allowed;
 }
 
+/* General buttons */
+.btn {
+  background: #fff;
+  color: var(--color-text);
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.btn:hover { background: #f8fafc; }
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--color-primary-500);
+  padding: 8px 8px;
+}
+
+/* Inputs (utility for filters/toolbars) */
+.input {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: #fff;
+}
+
 .card {
   background-color: #fff;
   border-radius: var(--radius-lg);

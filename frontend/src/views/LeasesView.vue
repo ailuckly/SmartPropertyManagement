@@ -45,23 +45,23 @@
       <header class="table-header">
         <h2>租约列表</h2>
         <div class="filters">
-          <select v-model="filters.status">
+<select v-model="filters.status" class="input">
             <option value="">所有状态</option>
             <option value="ACTIVE">生效中</option>
             <option value="EXPIRED">已到期</option>
             <option value="TERMINATED">已终止</option>
           </select>
-          <input v-model.number="filters.propertyId" type="number" min="1" placeholder="物业ID" />
+<input v-model.number="filters.propertyId" type="number" min="1" placeholder="物业ID" class="input" />
           <button class="btn-primary" @click="applyFilters">筛选</button>
-          <button class="link-btn" @click="clearFilters">清空</button>
+<button class="btn-link" @click="clearFilters">清空</button>
           <div class="pagination">
-            <button :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">上一页</button>
+<button class="btn" :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">上一页</button>
             <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
-            <button :disabled="pagination.page + 1 >= pagination.totalPages" @click="changePage(pagination.page + 1)">下一页</button>
+<button class="btn" :disabled="pagination.page + 1 >= pagination.totalPages" @click="changePage(pagination.page + 1)">下一页</button>
           </div>
         </div>
       </header>
-      <div class="table-wrapper">
+      <div class="table-wrapper" v-if="!loading">
         <table class="table">
           <thead>
             <tr>
@@ -94,6 +94,12 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div v-else class="card" style="padding:12px;">
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:16px;"></div>
       </div>
     </section>
   </div>

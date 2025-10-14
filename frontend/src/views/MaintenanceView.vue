@@ -26,22 +26,22 @@
       <header class="table-header">
         <h2>维修请求列表</h2>
         <div class="filters">
-          <select v-model="filters.status">
+<select v-model="filters.status" class="input">
             <option value="">所有状态</option>
             <option value="PENDING">待处理</option>
             <option value="IN_PROGRESS">处理中</option>
             <option value="COMPLETED">已完成</option>
             <option value="CANCELLED">已取消</option>
           </select>
-          <input v-model.number="filters.propertyId" type="number" min="1" placeholder="物业ID" />
+<input v-model.number="filters.propertyId" type="number" min="1" placeholder="物业ID" class="input" />
           <button class="btn-primary" @click="applyFilters">筛选</button>
-          <button class="link-btn" @click="clearFilters">清空</button>
+<button class="btn-link" @click="clearFilters">清空</button>
           <div class="pagination">
-          <button :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">
+<button class="btn" :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">
             上一页
           </button>
           <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
-          <button
+<button class="btn"
             :disabled="pagination.page + 1 >= pagination.totalPages"
             @click="changePage(pagination.page + 1)"
           >

@@ -72,19 +72,19 @@
       <header class="table-header">
         <h2>物业列表</h2>
         <div class="filters">
-          <input v-model="filters.city" placeholder="城市" />
-          <select v-model="filters.status">
+<input v-model="filters.city" placeholder="城市" class="input" />
+<select v-model="filters.status" class="input">
             <option value="">所有状态</option>
             <option value="AVAILABLE">可出租</option>
             <option value="LEASED">已出租</option>
             <option value="UNDER_MAINTENANCE">维护中</option>
           </select>
           <button class="btn-primary" @click="applyFilters">筛选</button>
-          <button class="link-btn" @click="clearFilters">清空</button>
+<button class="btn-link" @click="clearFilters">清空</button>
           <div class="pagination">
-            <button :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">上一页</button>
+<button class="btn" :disabled="pagination.page === 0" @click="changePage(pagination.page - 1)">上一页</button>
             <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
-            <button :disabled="pagination.page + 1 >= pagination.totalPages" @click="changePage(pagination.page + 1)">下一页</button>
+<button class="btn" :disabled="pagination.page + 1 >= pagination.totalPages" @click="changePage(pagination.page + 1)">下一页</button>
           </div>
         </div>
       </header>
