@@ -1,104 +1,16 @@
 <template>
   <div class="leases-view">
-    <el-row :gutter="20">
-      <!-- 表单卡片（仅业主和管理员可见） -->
-      <el-col v-if="isOwnerOrAdmin" :xs="24" :lg="8">
-        <el-card shadow="never">
-          <template #header>
-            <div class="card-header">
-              <span>{{ editingId ? '更新租约' : '创建租约' }}</span>
-              <el-button v-if="editingId" link type="primary" @click="resetForm">
-                <el-icon><RefreshLeft /></el-icon>
-                取消编辑
-              </el-button>
-            </div>
-          </template>
-
-          <el-form
-            ref="formRef"
-            :model="form"
-            :rules="rules"
-            label-width="90px"
-            size="default"
-            @submit.prevent="handleSubmit"
-          >
-            <el-form-item label="物业ID" prop="propertyId">
-              <el-input-number
-                v-model="form.propertyId"
-                :min="1"
-                placeholder="请输入物业ID"
-                style="width: 100%"
-              />
-            </el-form-item>
-
-            <el-form-item label="租户ID" prop="tenantId">
-              <el-input-number
-                v-model="form.tenantId"
-                :min="1"
-                placeholder="请输入租户ID"
-                style="width: 100%"
-              />
-            </el-form-item>
-
-            <el-form-item label="开始日期" prop="startDate">
-              <el-date-picker
-                v-model="form.startDate"
-                type="date"
-                placeholder="选择开始日期"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-
-            <el-form-item label="结束日期" prop="endDate">
-              <el-date-picker
-                v-model="form.endDate"
-                type="date"
-                placeholder="选择结束日期"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-
-            <el-form-item label="月租(¥)" prop="rentAmount">
-              <el-input-number
-                v-model="form.rentAmount"
-                :min="0"
-                :precision="2"
-                placeholder="请输入月租金额"
-                style="width: 100%"
-              />
-            </el-form-item>
-
-            <el-form-item label="状态" prop="status">
-              <el-select v-model="form.status" style="width: 100%">
-                <el-option label="生效中" value="ACTIVE" />
-                <el-option label="已到期" value="EXPIRED" />
-                <el-option label="已终止" value="TERMINATED" />
-              </el-select>
-            </el-form-item>
-
-            <el-form-item>
-              <el-button type="primary" native-type="submit" :loading="submitting" style="width: 100%">
-                {{ editingId ? '保存修改' : '创建租约' }}
-              </el-button>
-            </el-form-item>
-          </el-form>
-
-          <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-top: 12px" />
-        </el-card>
-      </el-col>
-
-      <!-- 列表卡片 -->
-      <el-col :xs="24" :lg="isOwnerOrAdmin ? 16 : 24">
-        <el-card shadow="never">
-          <template #header>
-            <div class="card-header">
-              <span>租约列表</span>
-            </div>
-          </template>
+    <!-- 租约列表卡片 -->
+    <el-card shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span>租约列表</span>
+          <el-button v-if="isOwnerOrAdmin" type="primary" @click="openCreateDialog">
+            <el-icon><Plus /></el-icon>
+            创建租约
+          </el-button>
+        </div>
+      </template>
 
           <!-- 筛选工具栏 -->
           <div class="filter-bar">
@@ -162,21 +74,105 @@
             </el-table-column>
           </el-table>
 
-          <!-- 分页 -->
-          <div class="pagination-wrapper">
-            <el-pagination
-              v-model:current-page="pagination.page"
-              v-model:page-size="pagination.size"
-              :total="pagination.total"
-              :page-sizes="[10, 20, 50, 100]"
-              layout="total, sizes, prev, pager, next, jumper"
-              @current-change="handlePageChange"
-              @size-change="handleSizeChange"
-            />
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :total="pagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
+    </el-card>
+
+    <!-- 租约表单弹窗 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editingId ? '更新租约' : '创建租约'"
+      width="600px"
+      @close="handleDialogClose"
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="90px"
+        size="default"
+        @submit.prevent="handleSubmit"
+      >
+        <el-form-item label="物业ID" prop="propertyId">
+          <el-input-number
+            v-model="form.propertyId"
+            :min="1"
+            placeholder="请输入物业ID"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="租户ID" prop="tenantId">
+          <el-input-number
+            v-model="form.tenantId"
+            :min="1"
+            placeholder="请输入租户ID"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="开始日期" prop="startDate">
+          <el-date-picker
+            v-model="form.startDate"
+            type="date"
+            placeholder="选择开始日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="结束日期" prop="endDate">
+          <el-date-picker
+            v-model="form.endDate"
+            type="date"
+            placeholder="选择结束日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="月租(¥)" prop="rentAmount">
+          <el-input-number
+            v-model="form.rentAmount"
+            :min="0"
+            :precision="2"
+            placeholder="请输入月租金额"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="form.status" style="width: 100%">
+            <el-option label="生效中" value="ACTIVE" />
+            <el-option label="已到期" value="EXPIRED" />
+            <el-option label="已终止" value="TERMINATED" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-top: 12px" />
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSubmit">
+            {{ editingId ? '保存修改' : '创建租约' }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -184,7 +180,7 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
-import { Search, RefreshLeft, Edit, Delete } from '@element-plus/icons-vue';
+import { Search, RefreshLeft, Edit, Delete, Plus } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 /**
@@ -223,6 +219,7 @@ const rules = {
 
 const editingId = ref(null);
 const error = ref('');
+const dialogVisible = ref(false); // 控制弹窗显示
 
 /**
  * Loads leases visible to the current user and updates pagination metadata.
@@ -245,6 +242,21 @@ const fetchLeases = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+/**
+ * 打开创建租约弹窗
+ */
+const openCreateDialog = () => {
+  resetForm();
+  dialogVisible.value = true;
+};
+
+/**
+ * 关闭弹窗并重置表单
+ */
+const handleDialogClose = () => {
+  resetForm();
 };
 
 const resetForm = () => {
@@ -283,6 +295,7 @@ const handleSubmit = async () => {
         await api.post('/leases', form);
         ElMessage.success('租约创建成功');
       }
+      dialogVisible.value = false;
       resetForm();
       fetchLeases();
     } catch (err) {
@@ -306,7 +319,7 @@ const startEdit = (item) => {
     rentAmount: item.rentAmount,
     status: item.status
   });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  dialogVisible.value = true;
 };
 
 /**
@@ -429,9 +442,9 @@ onMounted(() => {
   margin-top: 16px;
 }
 
-@media (max-width: 1200px) {
-  :deep(.el-col) {
-    margin-bottom: 20px;
-  }
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>

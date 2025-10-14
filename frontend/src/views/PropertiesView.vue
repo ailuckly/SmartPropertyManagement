@@ -1,103 +1,16 @@
 <template>
   <div class="properties-view">
-    <el-row :gutter="20">
-      <!-- 表单卡片 -->
-      <el-col :xs="24" :lg="8">
-        <el-card shadow="never">
-          <template #header>
-            <div class="card-header">
-              <span>{{ editingId ? '更新物业' : '新增物业' }}</span>
-              <el-button v-if="editingId" link type="primary" @click="resetForm">
-                <el-icon><RefreshLeft /></el-icon>
-                切换到新增
-              </el-button>
-            </div>
-          </template>
-
-          <el-form
-            ref="formRef"
-            :model="form"
-            :rules="rules"
-            label-width="100px"
-            size="default"
-            @submit.prevent="handleSubmit"
-          >
-            <el-form-item v-if="isAdmin" label="业主用户ID" prop="ownerId">
-              <el-input-number
-                v-model="form.ownerId"
-                :min="1"
-                placeholder="请输入业主用户ID"
-                style="width: 100%"
-              />
-            </el-form-item>
-
-            <el-form-item label="详细地址" prop="address">
-              <el-input v-model="form.address" placeholder="请输入详细地址" clearable />
-            </el-form-item>
-
-            <el-form-item label="城市" prop="city">
-              <el-input v-model="form.city" placeholder="请输入城市" clearable />
-            </el-form-item>
-
-            <el-form-item label="省/州" prop="state">
-              <el-input v-model="form.state" placeholder="请输入省/州" clearable />
-            </el-form-item>
-
-            <el-form-item label="邮编" prop="zipCode">
-              <el-input v-model="form.zipCode" placeholder="请输入邮编" clearable />
-            </el-form-item>
-
-            <el-form-item label="物业类型" prop="propertyType">
-              <el-select v-model="form.propertyType" placeholder="请选择物业类型" style="width: 100%">
-                <el-option label="公寓" value="APARTMENT" />
-                <el-option label="独栋" value="HOUSE" />
-                <el-option label="商用" value="COMMERCIAL" />
-              </el-select>
-            </el-form-item>
-
-            <el-form-item label="卧室数量" prop="bedrooms">
-              <el-input-number v-model="form.bedrooms" :min="0" style="width: 100%" />
-            </el-form-item>
-
-            <el-form-item label="卫生间数量" prop="bathrooms">
-              <el-input-number v-model="form.bathrooms" :min="0" :step="0.5" style="width: 100%" />
-            </el-form-item>
-
-            <el-form-item label="面积(㎡)" prop="squareFootage">
-              <el-input-number v-model="form.squareFootage" :min="0" style="width: 100%" />
-            </el-form-item>
-
-            <el-form-item label="月租(¥)" prop="rentAmount">
-              <el-input-number v-model="form.rentAmount" :min="0" :precision="2" style="width: 100%" />
-            </el-form-item>
-
-            <el-form-item label="状态" prop="status">
-              <el-select v-model="form.status" style="width: 100%">
-                <el-option label="可出租" value="AVAILABLE" />
-                <el-option label="已出租" value="LEASED" />
-                <el-option label="维护中" value="UNDER_MAINTENANCE" />
-              </el-select>
-            </el-form-item>
-
-            <el-form-item>
-              <el-button type="primary" native-type="submit" :loading="submitting" style="width: 100%">
-                {{ editingId ? '保存修改' : '创建物业' }}
-              </el-button>
-            </el-form-item>
-          </el-form>
-
-          <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-top: 12px" />
-        </el-card>
-      </el-col>
-
-      <!-- 列表卡片 -->
-      <el-col :xs="24" :lg="16">
-        <el-card shadow="never">
-          <template #header>
-            <div class="card-header">
-              <span>物业列表</span>
-            </div>
-          </template>
+    <!-- 物业列表卡片 -->
+    <el-card shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span>物业列表</span>
+          <el-button type="primary" @click="openCreateDialog">
+            <el-icon><Plus /></el-icon>
+            新建物业
+          </el-button>
+        </div>
+      </template>
 
           <!-- 筛选工具栏 -->
           <div class="filter-bar">
@@ -163,21 +76,104 @@
             </el-table-column>
           </el-table>
 
-          <!-- 分页 -->
-          <div class="pagination-wrapper">
-            <el-pagination
-              v-model:current-page="pagination.page"
-              v-model:page-size="pagination.size"
-              :total="pagination.total"
-              :page-sizes="[10, 20, 50, 100]"
-              layout="total, sizes, prev, pager, next, jumper"
-              @current-change="handlePageChange"
-              @size-change="handleSizeChange"
-            />
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :total="pagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
+    </el-card>
+
+    <!-- 物业表单弹窗 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editingId ? '更新物业' : '新建物业'"
+      width="600px"
+      @close="handleDialogClose"
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="100px"
+        size="default"
+        @submit.prevent="handleSubmit"
+      >
+        <el-form-item v-if="isAdmin" label="业主用户ID" prop="ownerId">
+          <el-input-number
+            v-model="form.ownerId"
+            :min="1"
+            placeholder="请输入业主用户ID"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="详细地址" prop="address">
+          <el-input v-model="form.address" placeholder="请输入详细地址" clearable />
+        </el-form-item>
+
+        <el-form-item label="城市" prop="city">
+          <el-input v-model="form.city" placeholder="请输入城市" clearable />
+        </el-form-item>
+
+        <el-form-item label="省/州" prop="state">
+          <el-input v-model="form.state" placeholder="请输入省/州" clearable />
+        </el-form-item>
+
+        <el-form-item label="邮编" prop="zipCode">
+          <el-input v-model="form.zipCode" placeholder="请输入邮编" clearable />
+        </el-form-item>
+
+        <el-form-item label="物业类型" prop="propertyType">
+          <el-select v-model="form.propertyType" placeholder="请选择物业类型" style="width: 100%">
+            <el-option label="公寓" value="APARTMENT" />
+            <el-option label="独栋" value="HOUSE" />
+            <el-option label="商用" value="COMMERCIAL" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="卧室数量" prop="bedrooms">
+          <el-input-number v-model="form.bedrooms" :min="0" style="width: 100%" />
+        </el-form-item>
+
+        <el-form-item label="卫生间数量" prop="bathrooms">
+          <el-input-number v-model="form.bathrooms" :min="0" :step="0.5" style="width: 100%" />
+        </el-form-item>
+
+        <el-form-item label="面积(㎡)" prop="squareFootage">
+          <el-input-number v-model="form.squareFootage" :min="0" style="width: 100%" />
+        </el-form-item>
+
+        <el-form-item label="月租(¥)" prop="rentAmount">
+          <el-input-number v-model="form.rentAmount" :min="0" :precision="2" style="width: 100%" />
+        </el-form-item>
+
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="form.status" style="width: 100%">
+            <el-option label="可出租" value="AVAILABLE" />
+            <el-option label="已出租" value="LEASED" />
+            <el-option label="维护中" value="UNDER_MAINTENANCE" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-top: 12px" />
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSubmit">
+            {{ editingId ? '保存修改' : '创建物业' }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -185,7 +181,7 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
-import { Search, RefreshLeft, Edit, Delete } from '@element-plus/icons-vue';
+import { Search, RefreshLeft, Edit, Delete, Plus } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 /**
@@ -225,6 +221,7 @@ const rules = {
 
 const editingId = ref(null); // null 表示当前为"新增"模式
 const error = ref('');
+const dialogVisible = ref(false); // 控制弹窗显示
 
 const isAdmin = authStore.hasAnyRole(['ROLE_ADMIN']);
 
@@ -249,6 +246,21 @@ const fetchProperties = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+/**
+ * 打开新建物业弹窗
+ */
+const openCreateDialog = () => {
+  resetForm();
+  dialogVisible.value = true;
+};
+
+/**
+ * 关闭弹窗并重置表单
+ */
+const handleDialogClose = () => {
+  resetForm();
 };
 
 /**
@@ -309,6 +321,7 @@ const handleSubmit = async () => {
         await api.post('/properties', payload);
         ElMessage.success('物业创建成功');
       }
+      dialogVisible.value = false;
       resetForm();
       fetchProperties();
     } catch (err) {
@@ -337,8 +350,7 @@ const startEdit = (item) => {
     rentAmount: item.rentAmount,
     status: item.status
   });
-  // 滚动到表单顶部
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  dialogVisible.value = true;
 };
 
 /**
@@ -472,9 +484,9 @@ onMounted(() => {
   margin-top: 16px;
 }
 
-@media (max-width: 1200px) {
-  :deep(.el-col) {
-    margin-bottom: 20px;
-  }
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>
