@@ -39,7 +39,7 @@
         </div>
       </header>
       <div class="table-wrapper">
-        <table>
+        <table class="table">
           <thead>
             <tr>
               <th>ID</th>
@@ -86,6 +86,7 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
+import { notify } from '../utils/notify';
 
 /**
  * Maintenance centre: tenants can submit requests while owners/admins can track and update ticket status.
@@ -128,6 +129,7 @@ const handleSubmit = async () => {
     await api.post('/maintenance-requests', form);
     form.propertyId = '';
     form.description = '';
+    notify('提交成功', 'success');
     fetchRequests();
   } catch (err) {
     error.value = err.response?.data?.message ?? '提交失败，请稍后再试';
@@ -141,7 +143,7 @@ const updateStatus = async (item) => {
   try {
     await api.patch(`/maintenance-requests/${item.id}/status`, { status: item.status });
   } catch (err) {
-    alert(err.response?.data?.message ?? '更新失败');
+    notify(err.response?.data?.message ?? '更新失败', 'error');
     fetchRequests();
   }
 };

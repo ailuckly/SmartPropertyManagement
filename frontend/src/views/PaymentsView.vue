@@ -40,7 +40,7 @@
     </section>
 
     <div class="table-wrapper">
-      <table>
+      <table class="table">
         <thead>
           <tr>
             <th>ID</th>
@@ -70,6 +70,7 @@
 import { reactive, ref } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
+import { notify } from '../utils/notify';
 
 /**
  * Payment centre. Owners/admins can record new payments, whereas authorised viewers can filter by lease.
@@ -105,6 +106,7 @@ const fetchPayments = async () => {
       params: { leaseId: filters.leaseId, size: 50 }
     });
     payments.value = data.content;
+    notify(`已查询到 ${data.content.length} 条记录`, 'info', 2000);
   } catch (err) {
     error.value = err.response?.data?.message ?? '查询失败';
   }
@@ -117,6 +119,7 @@ const handleSubmit = async () => {
   error.value = '';
   try {
     await api.post('/payments', form);
+    notify('登记成功', 'success');
     if (!filters.leaseId) {
       filters.leaseId = form.leaseId;
     }
