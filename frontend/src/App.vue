@@ -23,7 +23,11 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="logout">
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon>
+                  个人资料
+                </el-dropdown-item>
+                <el-dropdown-item divided command="logout">
                   <el-icon><SwitchButton /></el-icon>
                   退出登录
                 </el-dropdown-item>
@@ -130,7 +134,9 @@ const pageTitle = computed(() => route.meta?.title ?? '');
 const activeMenu = computed(() => route.path);
 
 const handleCommand = (command) => {
-  if (command === 'logout') {
+  if (command === 'profile') {
+    router.push('/profile');
+  } else if (command === 'logout') {
     authStore.logout();
     ElMessage.success('已退出登录');
     router.push('/login');

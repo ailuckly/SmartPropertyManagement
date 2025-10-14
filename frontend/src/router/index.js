@@ -39,6 +39,12 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: ['ROLE_OWNER', 'ROLE_ADMIN'], title: '收支记录' }
     },
     {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('../views/ProfileView.vue'),
+      meta: { requiresAuth: true, title: '个人资料' }
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue'),
