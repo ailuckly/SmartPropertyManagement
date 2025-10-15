@@ -56,7 +56,7 @@ public class PaymentService {
             page = paymentRepository.findAllByLeasePropertyOwnerId(principal.getId(), pageable);
         } else {
             // 租客只能查看自己租约的支付记录
-            page = paymentRepository.findAllByLeaseTenantId(principal.getId(), pageable);
+            page = paymentRepository.findAllByTenantId(principal.getId(), pageable);
         }
 
         return PageResponse.from(page.map(PaymentMapper::toDto));
@@ -99,7 +99,11 @@ public class PaymentService {
 
         com.example.propertymanagement.model.Payment payment =
             com.example.propertymanagement.model.Payment.builder()
-                .lease(lease)
+                .leaseId(lease.getId())
+                .tenantId(lease.getTenantId())
+                .tenantUsername(lease.getTenantUsername())
+                .propertyId(lease.getPropertyId())
+                .propertyAddress(lease.getPropertyAddress())
                 .amount(request.amount())
                 .paymentDate(request.paymentDate())
                 .paymentMethod(request.paymentMethod())
@@ -115,14 +119,14 @@ public class PaymentService {
         if (isOwnerOfLease(lease, principal)) {
             return;
         }
-        if (lease.getTenant().getId().equals(principal.getId())) {
+        if (lease.getTenantId().equals(principal.getId())) {
             return;
         }
         throw new ForbiddenException("无权查看该租约的支付信息");
     }
 
     private boolean isOwnerOfLease(Lease lease, UserPrincipal principal) {
-        return lease.getProperty().getOwner().getId().equals(principal.getId());
+        return lease.getOwnerId().equals(principal.getId());
     }
 
     private UserPrincipal getCurrentUser() {

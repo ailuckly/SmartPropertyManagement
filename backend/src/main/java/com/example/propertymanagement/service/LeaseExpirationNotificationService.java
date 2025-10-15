@@ -69,10 +69,10 @@ public class LeaseExpirationNotificationService {
                     NotificationType.LEASE_EXPIRING_SOON,
                     "租约即将到期提醒",
                     String.format("您的物业 %s 的租约将在 %d 天后到期（到期日期：%s）。请及时与租户沟通续约事宜。",
-                        lease.getProperty().getAddress(),
+                        lease.getPropertyAddress(),
                         daysUntilExpiry,
                         lease.getEndDate()),
-                    lease.getProperty().getOwner().getId(),
+                    lease.getOwnerId(),
                     "lease",
                     lease.getId()
                 );
@@ -82,10 +82,10 @@ public class LeaseExpirationNotificationService {
                     NotificationType.LEASE_EXPIRING_SOON,
                     "租约即将到期提醒",
                     String.format("您租赁的物业 %s 的租约将在 %d 天后到期（到期日期：%s）。如需续租，请及时联系业主。",
-                        lease.getProperty().getAddress(),
+                        lease.getPropertyAddress(),
                         daysUntilExpiry,
                         lease.getEndDate()),
-                    lease.getTenant().getId(),
+                    lease.getTenantId(),
                     "lease",
                     lease.getId()
                 );

@@ -3,7 +3,9 @@ package com.example.propertymanagement.service;
 import com.example.propertymanagement.config.FileStorageConfig;
 import com.example.propertymanagement.model.File;
 import com.example.propertymanagement.model.FileCategory;
+import com.example.propertymanagement.model.Property;
 import com.example.propertymanagement.repository.FileRepository;
+import com.example.propertymanagement.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -35,6 +37,7 @@ public class FileService {
     
     private final FileRepository fileRepository;
     private final FileStorageConfig fileStorageConfig;
+    private final PropertyRepository propertyRepository;
     
     /**
      * 文件上传
@@ -117,6 +120,17 @@ public class FileService {
     }
     
     /**
+     * 根据存储文件名获取文件
+     * 
+     * @param storedFileName 存储文件名
+     * @return 文件对象
+     */
+    public File getFileByStoredName(String storedFileName) {
+        return fileRepository.findByStoredFileName(storedFileName)
+                .orElseThrow(() -> new IllegalArgumentException("文件不存在: " + storedFileName));
+    }
+    
+    /**
      * 根据存储文件名加载文件资源
      * 
      * @param storedFileName 存储文件名
@@ -186,6 +200,12 @@ public class FileService {
         
         newCover.setIsCover(true);
         fileRepository.save(newCover);
+        
+        // 同步更新 Property 表的 coverImagePath 字段
+        Property property = propertyRepository.findById(entityId)
+                .orElseThrow(() -> new IllegalArgumentException("物业不存在"));
+        property.setCoverImagePath(newCover.getStoredFileName());
+        propertyRepository.save(property);
     }
     
     /**

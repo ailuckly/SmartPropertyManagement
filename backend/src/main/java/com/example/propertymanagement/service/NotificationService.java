@@ -60,7 +60,8 @@ public class NotificationService {
             .type(type)
             .title(title)
             .content(content)
-            .recipient(recipient)
+            .recipientId(recipient.getId())
+            .recipientUsername(recipient.getUsername())
             .isRead(false)
             .relatedEntityType(relatedEntityType)
             .relatedEntityId(relatedEntityId)
@@ -116,7 +117,7 @@ public class NotificationService {
             .orElseThrow(() -> new ResourceNotFoundException("通知不存在"));
 
         // 确保只能标记自己的通知
-        if (!notification.getRecipient().getId().equals(principal.getId())) {
+        if (!notification.getRecipientId().equals(principal.getId())) {
             throw new ForbiddenException("无权操作此通知");
         }
 
@@ -152,7 +153,7 @@ public class NotificationService {
             .orElseThrow(() -> new ResourceNotFoundException("通知不存在"));
 
         // 确保只能删除自己的通知
-        if (!notification.getRecipient().getId().equals(principal.getId())) {
+        if (!notification.getRecipientId().equals(principal.getId())) {
             throw new ForbiddenException("无权删除此通知");
         }
 

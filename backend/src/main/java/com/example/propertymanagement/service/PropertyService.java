@@ -2,6 +2,7 @@ package com.example.propertymanagement.service;
 
 import com.example.propertymanagement.dto.common.PageResponse;
 import com.example.propertymanagement.dto.property.PropertyDto;
+import com.example.propertymanagement.dto.property.PropertyFilterRequest;
 import com.example.propertymanagement.dto.property.PropertyRequest;
 import com.example.propertymanagement.exception.ForbiddenException;
 import com.example.propertymanagement.exception.ResourceNotFoundException;
@@ -78,6 +79,42 @@ public class PropertyService {
         }
         return PageResponse.from(page.map(PropertyMapper::toDto));
     }
+    
+    /**
+     * 使用高级筛选条件查询物业列表
+     *
+     * @param pageable 分页参数
+     * @param filterRequest 筛选条件
+     * @return 包含分页元数据的 {@link PageResponse}
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<PropertyDto> getPropertiesWithFilters(Pageable pageable, PropertyFilterRequest filterRequest) {
+        // 如果有关键词搜索，优先使用搜索功能
+        if (filterRequest.hasKeyword()) {
+            return searchProperties(pageable, filterRequest.getOwnerId(), filterRequest.getKeyword());
+        }
+        
+        // 否则使用高级筛选
+        Page<Property> page;
+        if (filterRequest.hasFilters()) {
+            page = propertyRepository.findPropertiesWithFilters(
+                filterRequest.getOwnerId(),
+                filterRequest.getStatus(),
+                filterRequest.getPropertyType(),
+                filterRequest.getMinRent(),
+                filterRequest.getMaxRent(),
+                filterRequest.getMinBedrooms(),
+                filterRequest.getMaxBedrooms(),
+                filterRequest.getCity(),
+                pageable
+            );
+        } else {
+            // 无筛选条件，使用基础查询
+            return getProperties(pageable, filterRequest.getOwnerId());
+        }
+        
+        return PageResponse.from(page.map(PropertyMapper::toDto));
+    }
 
     /**
      * 根据 ID 获取物业详情。
@@ -109,7 +146,8 @@ public class PropertyService {
         User owner = determineOwner(principal, request.ownerId());
 
         Property property = Property.builder()
-            .owner(owner)
+            .ownerId(owner.getId())
+            .ownerUsername(owner.getUsername())
             .address(request.address())
             .city(request.city())
             .state(request.state())
@@ -138,14 +176,15 @@ public class PropertyService {
         UserPrincipal principal = getAuthenticatedUser();
         Property property = findPropertyOrThrow(id);
 
-        if (!isAdmin(principal) && !property.getOwner().getId().equals(principal.getId())) {
+        if (!isAdmin(principal) && !property.getOwnerId().equals(principal.getId())) {
             throw new ForbiddenException("仅物业管理员或该物业所有者可以更新信息");
         }
 
         if (request.ownerId() != null && isAdmin(principal)) {
             User newOwner = userRepository.findById(request.ownerId())
                 .orElseThrow(() -> new ResourceNotFoundException("未找到指定业主"));
-            property.setOwner(newOwner);
+            property.setOwnerId(newOwner.getId());
+            property.setOwnerUsername(newOwner.getUsername());
         }
 
         property.setAddress(request.address());
@@ -174,11 +213,63 @@ public class PropertyService {
         UserPrincipal principal = getAuthenticatedUser();
         Property property = findPropertyOrThrow(id);
 
-        if (!isAdmin(principal) && !property.getOwner().getId().equals(principal.getId())) {
+        if (!isAdmin(principal) && !property.getOwnerId().equals(principal.getId())) {
             throw new ForbiddenException("仅物业管理员或该物业所有者可以删除信息");
         }
 
         propertyRepository.delete(property);
+    }
+
+    /**
+     * 批量删除物业。只有管理员或物业所有者可执行。
+     *
+     * @param ids 物业ID列表
+     */
+    @Transactional
+    public void batchDeleteProperties(java.util.List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+        
+        UserPrincipal principal = getAuthenticatedUser();
+        
+        for (Long id : ids) {
+            Property property = findPropertyOrThrow(id);
+            
+            if (!isAdmin(principal) && !property.getOwnerId().equals(principal.getId())) {
+                throw new ForbiddenException("仅物业管理员或该物业所有者可以删除信息：物业ID=" + id);
+            }
+        }
+        
+        // 所有权限检查通过后，批量删除
+        propertyRepository.deleteAllByIdIn(ids);
+    }
+
+    /**
+     * 批量更新物业状态。只有管理员或物业所有者可执行。
+     *
+     * @param ids 物业ID列表
+     * @param status 新状态
+     */
+    @Transactional
+    public void batchUpdateStatus(java.util.List<Long> ids, PropertyStatus status) {
+        if (ids == null || ids.isEmpty() || status == null) {
+            return;
+        }
+        
+        UserPrincipal principal = getAuthenticatedUser();
+        
+        for (Long id : ids) {
+            Property property = findPropertyOrThrow(id);
+            
+            if (!isAdmin(principal) && !property.getOwnerId().equals(principal.getId())) {
+                throw new ForbiddenException("仅物业管理员或该物业所有者可以更新状态：物业ID=" + id);
+            }
+            
+            property.setStatus(status);
+        }
+        
+        // 无需显式调用save，@Transactional会自动保存更改
     }
 
     /**

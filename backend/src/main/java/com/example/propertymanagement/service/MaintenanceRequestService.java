@@ -64,8 +64,10 @@ public class MaintenanceRequestService {
             .orElseThrow(() -> new ResourceNotFoundException("未找到当前用户"));
 
         MaintenanceRequest request = MaintenanceRequest.builder()
-            .property(property)
-            .tenant(tenant)
+            .propertyId(property.getId())
+            .propertyAddress(property.getAddress())
+            .tenantId(tenant.getId())
+            .tenantUsername(tenant.getUsername())
             .description(requestDto.description())
             .status(MaintenanceStatus.PENDING)
             .build();

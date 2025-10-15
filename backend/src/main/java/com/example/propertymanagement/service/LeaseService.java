@@ -57,7 +57,7 @@ public class LeaseService {
         if (isAdmin(principal)) {
             page = leaseRepository.findAll(pageable);
         } else if (isOwner(principal)) {
-            page = leaseRepository.findAllByPropertyOwnerId(principal.getId(), pageable);
+            page = leaseRepository.findAllByOwnerId(principal.getId(), pageable);
         } else {
             page = leaseRepository.findAllByTenantId(principal.getId(), pageable);
         }
@@ -95,8 +95,8 @@ public class LeaseService {
             .orElseThrow(() -> new ResourceNotFoundException("未找到租约"));
 
         if (isAdmin(principal)
-            || (isOwner(principal) && lease.getProperty().getOwner().getId().equals(principal.getId()))
-            || lease.getTenant().getId().equals(principal.getId())) {
+            || (isOwner(principal) && lease.getOwnerId().equals(principal.getId()))
+            || lease.getTenantId().equals(principal.getId())) {
             return LeaseMapper.toDto(lease);
         }
 
@@ -119,7 +119,7 @@ public class LeaseService {
         Property property = propertyRepository.findById(request.propertyId())
             .orElseThrow(() -> new ResourceNotFoundException("未找到物业"));
 
-        if (!isAdmin(principal) && !property.getOwner().getId().equals(principal.getId())) {
+        if (!isAdmin(principal) && !property.getOwnerId().equals(principal.getId())) {
             throw new ForbiddenException("只能为自己拥有的物业创建租约");
         }
 
@@ -131,8 +131,12 @@ public class LeaseService {
             : LeaseStatus.ACTIVE;
 
         Lease lease = Lease.builder()
-            .property(property)
-            .tenant(tenant)
+            .propertyId(property.getId())
+            .propertyAddress(property.getAddress())
+            .ownerId(property.getOwnerId())
+            .ownerUsername(property.getOwnerUsername())
+            .tenantId(tenant.getId())
+            .tenantUsername(tenant.getUsername())
             .startDate(request.startDate())
             .endDate(request.endDate())
             .rentAmount(request.rentAmount())
@@ -177,29 +181,33 @@ public class LeaseService {
             .orElseThrow(() -> new ResourceNotFoundException("未找到租约"));
 
         if (!isAdmin(principal)
-            && !lease.getProperty().getOwner().getId().equals(principal.getId())) {
+            && !lease.getOwnerId().equals(principal.getId())) {
             throw new ForbiddenException("无权更新该租约");
         }
 
         Property property = propertyRepository.findById(request.propertyId())
             .orElseThrow(() -> new ResourceNotFoundException("未找到物业"));
 
-        if (!isAdmin(principal) && !property.getOwner().getId().equals(principal.getId())) {
+        if (!isAdmin(principal) && !property.getOwnerId().equals(principal.getId())) {
             throw new ForbiddenException("只能将租约关联到自己拥有的物业");
         }
 
         User tenant = userRepository.findById(request.tenantId())
             .orElseThrow(() -> new ResourceNotFoundException("未找到租户"));
 
-        lease.setProperty(property);
-        lease.setTenant(tenant);
+        lease.setPropertyId(property.getId());
+        lease.setPropertyAddress(property.getAddress());
+        lease.setOwnerId(property.getOwnerId());
+        lease.setOwnerUsername(property.getOwnerUsername());
+        lease.setTenantId(tenant.getId());
+        lease.setTenantUsername(tenant.getUsername());
         lease.setStartDate(request.startDate());
         lease.setEndDate(request.endDate());
         lease.setRentAmount(request.rentAmount());
         if (request.status() != null) {
             lease.setStatus(request.status());
             if (request.status() == LeaseStatus.TERMINATED || request.status() == LeaseStatus.EXPIRED) {
-                lease.getProperty().setStatus(PropertyStatus.AVAILABLE);
+                property.setStatus(PropertyStatus.AVAILABLE);
             }
         }
 
@@ -218,11 +226,14 @@ public class LeaseService {
             .orElseThrow(() -> new ResourceNotFoundException("未找到租约"));
 
         if (!isAdmin(principal)
-            && !lease.getProperty().getOwner().getId().equals(principal.getId())) {
+            && !lease.getOwnerId().equals(principal.getId())) {
             throw new ForbiddenException("无权删除该租约");
         }
 
-        lease.getProperty().setStatus(PropertyStatus.AVAILABLE);
+        Property property = propertyRepository.findById(lease.getPropertyId())
+            .orElseThrow(() -> new ResourceNotFoundException("未找到物业"));
+        property.setStatus(PropertyStatus.AVAILABLE);
+        
         leaseRepository.delete(lease);
     }
 
