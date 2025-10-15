@@ -12,7 +12,9 @@
       :multiple="multiple"
       :limit="limit"
       :with-credentials="true"
+      :auto-upload="true"
       :before-upload="handleBeforeUpload"
+      :on-change="handleChange"
       :on-success="handleSuccess"
       :on-error="handleError"
       :on-remove="handleRemove"
@@ -161,30 +163,60 @@ const uploadData = computed(() => {
 
 // 监听 modelValue 变化，同步到 fileList
 watch(() => props.modelValue, (newVal) => {
+  console.log('[FileUpload] modelValue changed:', newVal)
+  
   if (newVal && newVal.length > 0) {
-    fileList.value = newVal.map(file => ({
-      uid: file.id,
-      name: file.originalFileName,
-      status: 'success',
-      url: getFileUrl(file.storedFileName),
-      response: { file }
-    }))
+    fileList.value = newVal.map(file => {
+      const previewUrl = getFileUrl(file.storedFileName)
+      console.log('[FileUpload] File preview URL:', file.originalFileName, previewUrl)
+      
+      return {
+        uid: file.id,
+        name: file.originalFileName,
+        status: 'success',
+        url: previewUrl,
+        response: { file }
+      }
+    })
   } else {
     fileList.value = []
   }
+  
+  console.log('[FileUpload] Updated fileList:', fileList.value)
 }, { immediate: true })
 
 /**
  * 获取文件访问URL
  */
 function getFileUrl(storedFileName) {
-  return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/files/preview/${storedFileName}`
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+  const url = `${baseUrl}/api/files/preview/${storedFileName}`
+  console.log('[FileUpload] Generated preview URL:', url)
+  return url
+}
+
+/**
+ * 文件状态变化时的回调（用于实时预览）
+ */
+function handleChange(file, fileList) {
+  console.log('[FileUpload] File changed:', file)
+  
+  // 如果是图片文件且还未上传，创建本地预览 URL
+  if (file.status === 'ready' && file.raw) {
+    const isImage = file.raw.type.startsWith('image/')
+    if (isImage && (props.category.includes('IMAGE') || props.category === 'USER_AVATAR')) {
+      file.url = URL.createObjectURL(file.raw)
+      console.log('[FileUpload] Created local preview URL for:', file.name, file.url)
+    }
+  }
 }
 
 /**
  * 上传前的校验
  */
 function handleBeforeUpload(file) {
+  console.log('[FileUpload] Before upload:', file)
+  
   // 文件大小校验（根据分类）
   let maxSize = 5 * 1024 * 1024 // 默认5MB
   
@@ -221,17 +253,34 @@ function handleBeforeUpload(file) {
  * 上传成功回调
  */
 function handleSuccess(response, file, fileList) {
+  console.log('[FileUpload] Upload success response:', response)
+  console.log('[FileUpload] File object:', file)
+  
   if (response.success) {
     ElMessage.success('上传成功')
     
-    // 更新文件列表
+    // 释放本地 blob URL（如果存在）
+    if (file.url && file.url.startsWith('blob:')) {
+      URL.revokeObjectURL(file.url)
+      console.log('[FileUpload] Revoked local blob URL')
+    }
+    
+    // 更新文件列表 - 确保 url 指向正确的服务器预览地址
     const uploadedFile = response.file
+    const previewUrl = getFileUrl(uploadedFile.storedFileName)
+    
+    console.log('[FileUpload] Server preview URL:', previewUrl)
+    
+    // 更新当前文件的 url，使其能够正确预览
+    file.url = previewUrl
+    
     const newFileList = fileList.map(f => {
       if (f.uid === file.uid) {
         return {
           ...f,
           response: { file: uploadedFile },
-          url: getFileUrl(uploadedFile.storedFileName)
+          url: previewUrl,
+          status: 'success'
         }
       }
       return f
@@ -241,6 +290,8 @@ function handleSuccess(response, file, fileList) {
     const files = newFileList
       .filter(f => f.status === 'success' && f.response?.file)
       .map(f => f.response.file)
+    
+    console.log('[FileUpload] Updated file list:', files)
     
     emit('update:modelValue', files)
     emit('upload-success', uploadedFile)
