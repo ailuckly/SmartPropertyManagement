@@ -1,7 +1,9 @@
 package com.example.propertymanagement.controller;
 
 import com.example.propertymanagement.dto.common.PageResponse;
+import com.example.propertymanagement.dto.property.BatchStatusUpdateRequest;
 import com.example.propertymanagement.dto.property.PropertyDto;
+import com.example.propertymanagement.dto.property.PropertyFilterRequest;
 import com.example.propertymanagement.dto.property.PropertyRequest;
 import com.example.propertymanagement.service.ExcelExportService;
 import com.example.propertymanagement.service.PropertyService;
@@ -42,21 +44,44 @@ public class PropertyController {
     }
 
     /**
-     * Returns a paginated property dataset, optionally filtered by owner and keyword.
+     * Returns a paginated property dataset with advanced filtering support.
      * @param pageable 分页参数
      * @param ownerId 业主ID（可选）
      * @param keyword 搜索关键词（可选）
+     * @param status 物业状态（可选）
+     * @param propertyType 物业类型（可选）
+     * @param minRent 最低租金（可选）
+     * @param maxRent 最高租金（可选）
+     * @param minBedrooms 最少卧室数（可选）
+     * @param maxBedrooms 最多卧室数（可选）
+     * @param city 城市（可选）
      */
     @GetMapping
     public ResponseEntity<PageResponse<PropertyDto>> getProperties(
         @PageableDefault Pageable pageable,
         @RequestParam(required = false) Long ownerId,
-        @RequestParam(required = false) String keyword
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) String propertyType,
+        @RequestParam(required = false) Double minRent,
+        @RequestParam(required = false) Double maxRent,
+        @RequestParam(required = false) Integer minBedrooms,
+        @RequestParam(required = false) Integer maxBedrooms,
+        @RequestParam(required = false) String city
     ) {
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            return ResponseEntity.ok(propertyService.searchProperties(pageable, ownerId, keyword));
-        }
-        return ResponseEntity.ok(propertyService.getProperties(pageable, ownerId));
+        PropertyFilterRequest filterRequest = PropertyFilterRequest.builder()
+            .ownerId(ownerId)
+            .keyword(keyword)
+            .status(status)
+            .propertyType(propertyType)
+            .minRent(minRent)
+            .maxRent(maxRent)
+            .minBedrooms(minBedrooms)
+            .maxBedrooms(maxBedrooms)
+            .city(city)
+            .build();
+            
+        return ResponseEntity.ok(propertyService.getPropertiesWithFilters(pageable, filterRequest));
     }
 
     /**
@@ -91,6 +116,24 @@ public class PropertyController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProperty(@PathVariable Long id) {
         propertyService.deleteProperty(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Batch delete properties by ids.
+     */
+    @DeleteMapping("/batch")
+    public ResponseEntity<Void> batchDeleteProperties(@RequestBody List<Long> ids) {
+        propertyService.batchDeleteProperties(ids);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Batch update property status.
+     */
+    @PutMapping("/batch/status")
+    public ResponseEntity<Void> batchUpdateStatus(@RequestBody BatchStatusUpdateRequest request) {
+        propertyService.batchUpdateStatus(request.getIds(), request.getStatus());
         return ResponseEntity.noContent().build();
     }
 

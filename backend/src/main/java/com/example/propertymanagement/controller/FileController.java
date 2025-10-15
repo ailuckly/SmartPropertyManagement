@@ -2,7 +2,7 @@ package com.example.propertymanagement.controller;
 
 import com.example.propertymanagement.model.File;
 import com.example.propertymanagement.model.FileCategory;
-import com.example.propertymanagement.model.User;
+import com.example.propertymanagement.security.UserPrincipal;
 import com.example.propertymanagement.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -50,7 +50,7 @@ public class FileController {
             @RequestParam("category") String category,
             @RequestParam(value = "entityId", required = false) Long entityId,
             @RequestParam(value = "description", required = false) String description,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal UserPrincipal currentUser) {
         
         try {
             // 转换分类字符串为枚举
@@ -90,7 +90,7 @@ public class FileController {
     /**
      * 下载/访问文件
      * 
-     * @param fileName 存储文件名
+     * @param fileName 存储文件名（UUID格式）
      * @return 文件资源
      */
     @GetMapping("/download/{fileName:.+}")
@@ -98,10 +98,8 @@ public class FileController {
         try {
             Resource resource = fileService.loadFileAsResource(fileName);
             
-            // 获取文件信息用于设置响应头
-            File fileInfo = fileService.getFile(
-                    Long.parseLong(fileName.substring(0, fileName.lastIndexOf('.')))
-            );
+            // 通过存储文件名获取文件信息
+            File fileInfo = fileService.getFileByStoredName(fileName);
             
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(fileInfo.getFileType()))
@@ -119,7 +117,7 @@ public class FileController {
     /**
      * 在线预览文件（图片、PDF等）
      * 
-     * @param fileName 存储文件名
+     * @param fileName 存储文件名（UUID格式）
      * @return 文件资源（inline方式）
      */
     @GetMapping("/preview/{fileName:.+}")
@@ -127,14 +125,13 @@ public class FileController {
         try {
             Resource resource = fileService.loadFileAsResource(fileName);
             
-            // 获取文件类型
-            File fileInfo = fileService.getFile(
-                    Long.parseLong(fileName.substring(0, fileName.lastIndexOf('.')))
-            );
+            // 通过存储文件名获取文件信息
+            File fileInfo = fileService.getFileByStoredName(fileName);
             
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(fileInfo.getFileType()))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                    .header(HttpHeaders.CACHE_CONTROL, "max-age=3600")
                     .body(resource);
                     
         } catch (MalformedURLException e) {
@@ -209,7 +206,7 @@ public class FileController {
     public ResponseEntity<Map<String, Object>> setCoverImage(
             @PathVariable Long fileId,
             @RequestParam Long propertyId,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal UserPrincipal currentUser) {
         
         try {
             fileService.setCoverImage(fileId, propertyId);
@@ -237,7 +234,7 @@ public class FileController {
     @DeleteMapping("/{fileId}")
     public ResponseEntity<Map<String, Object>> deleteFile(
             @PathVariable Long fileId,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal UserPrincipal currentUser) {
         
         try {
             fileService.deleteFile(fileId, currentUser.getId());

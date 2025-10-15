@@ -62,8 +62,8 @@ public class DashboardController {
         } else if (isOwner) {
             // 业主看自己的物业相关数据
             overview.put("totalProperties", propertyRepository.countByOwnerId(userId));
-            overview.put("totalLeases", leaseRepository.countByProperty_OwnerId(userId));
-            overview.put("pendingMaintenances", maintenanceRequestRepository.countByProperty_OwnerIdAndStatus(userId, MaintenanceStatus.PENDING));
+            overview.put("totalLeases", leaseRepository.countByOwnerId(userId));
+            overview.put("pendingMaintenances", maintenanceRequestRepository.countByPropertyOwnerIdAndStatus(userId, MaintenanceStatus.PENDING));
         } else {
             // 租户看自己相关数据
             overview.put("totalLeases", leaseRepository.countByTenantId(userId));
@@ -141,7 +141,7 @@ public class DashboardController {
         if (isAdmin) {
             requests = maintenanceRequestRepository.findAll();
         } else if (isOwner) {
-            requests = maintenanceRequestRepository.findByProperty_OwnerId(currentUser.getId());
+            requests = maintenanceRequestRepository.findByPropertyOwnerId(currentUser.getId());
         } else {
             requests = maintenanceRequestRepository.findByTenantId(currentUser.getId());
         }
@@ -171,7 +171,7 @@ public class DashboardController {
         if (isAdmin) {
             payments = paymentRepository.findByPaymentDateBetween(startDate, endDate);
         } else {
-            payments = paymentRepository.findByLease_Property_OwnerIdAndPaymentDateBetween(
+            payments = paymentRepository.findByLeasePropertyOwnerIdAndPaymentDateBetween(
                 currentUser.getId(), startDate, endDate);
         }
 
@@ -219,7 +219,7 @@ public class DashboardController {
         if (isAdmin) {
             leases = leaseRepository.findByEndDateBetweenAndStatus(today, threeMonthsLater, LeaseStatus.ACTIVE);
         } else {
-            leases = leaseRepository.findByProperty_OwnerIdAndEndDateBetweenAndStatus(
+            leases = leaseRepository.findByOwnerIdAndEndDateBetweenAndStatus(
                 currentUser.getId(), today, threeMonthsLater, LeaseStatus.ACTIVE);
         }
 
@@ -261,7 +261,7 @@ public class DashboardController {
         if (isAdmin) {
             recentLeases = leaseRepository.findTop5ByOrderByIdDesc();
         } else if (isOwner) {
-            recentLeases = leaseRepository.findTop5ByProperty_OwnerIdOrderByIdDesc(currentUser.getId());
+            recentLeases = leaseRepository.findTop5ByOwnerIdOrderByIdDesc(currentUser.getId());
         } else {
             recentLeases = leaseRepository.findTop5ByTenantIdOrderByIdDesc(currentUser.getId());
         }
@@ -270,7 +270,7 @@ public class DashboardController {
             Map<String, Object> activity = new HashMap<>();
             activity.put("type", "lease");
             activity.put("title", "新租约创建");
-            activity.put("description", "物业: " + (lease.getProperty() != null ? lease.getProperty().getAddress() : "N/A"));
+            activity.put("description", "物业: " + (lease.getPropertyAddress() != null ? lease.getPropertyAddress() : "N/A"));
             activity.put("date", lease.getStartDate());
             activities.add(activity);
         }
@@ -280,7 +280,7 @@ public class DashboardController {
         if (isAdmin) {
             recentMaintenance = maintenanceRequestRepository.findTop5ByOrderByIdDesc();
         } else if (isOwner) {
-            recentMaintenance = maintenanceRequestRepository.findTop5ByProperty_OwnerIdOrderByIdDesc(currentUser.getId());
+            recentMaintenance = maintenanceRequestRepository.findTop5ByPropertyOwnerIdOrderByIdDesc(currentUser.getId());
         } else {
             recentMaintenance = maintenanceRequestRepository.findTop5ByTenantIdOrderByIdDesc(currentUser.getId());
         }
