@@ -13,10 +13,10 @@ public final class LeaseMapper {
     public static LeaseDto toDto(Lease lease) {
         return new LeaseDto(
             lease.getId(),
-            lease.getProperty() != null ? lease.getProperty().getId() : null,
-            lease.getProperty() != null ? lease.getProperty().getAddress() : null,
-            lease.getTenant() != null ? lease.getTenant().getId() : null,
-            lease.getTenant() != null ? lease.getTenant().getUsername() : null,
+            lease.getPropertyId(),
+            lease.getPropertyAddress(),
+            lease.getTenantId(),
+            lease.getTenantUsername(),
             lease.getStartDate(),
             lease.getEndDate(),
             lease.getRentAmount(),

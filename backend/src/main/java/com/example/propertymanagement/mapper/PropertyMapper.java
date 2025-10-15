@@ -13,8 +13,8 @@ public final class PropertyMapper {
     public static PropertyDto toDto(Property property) {
         return new PropertyDto(
             property.getId(),
-            property.getOwner() != null ? property.getOwner().getId() : null,
-            property.getOwner() != null ? property.getOwner().getUsername() : null,
+            property.getOwnerId(),
+            property.getOwnerUsername(),
             property.getAddress(),
             property.getCity(),
             property.getState(),

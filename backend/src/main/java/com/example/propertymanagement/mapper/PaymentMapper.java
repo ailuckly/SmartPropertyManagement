@@ -13,11 +13,9 @@ public final class PaymentMapper {
     public static PaymentDto toDto(Payment payment) {
         return new PaymentDto(
             payment.getId(),
-            payment.getLease() != null ? payment.getLease().getId() : null,
-            payment.getLease() != null && payment.getLease().getProperty() != null 
-                ? payment.getLease().getProperty().getAddress() : null,
-            payment.getLease() != null && payment.getLease().getTenant() != null 
-                ? payment.getLease().getTenant().getUsername() : null,
+            payment.getLeaseId(),
+            payment.getPropertyAddress(),
+            payment.getTenantUsername(),
             payment.getAmount(),
             payment.getPaymentDate(),
             payment.getPaymentMethod(),

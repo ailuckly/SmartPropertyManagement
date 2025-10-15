@@ -13,10 +13,10 @@ public final class MaintenanceMapper {
     public static MaintenanceRequestDto toDto(MaintenanceRequest request) {
         return new MaintenanceRequestDto(
             request.getId(),
-            request.getProperty() != null ? request.getProperty().getId() : null,
-            request.getProperty() != null ? request.getProperty().getAddress() : null,
-            request.getTenant() != null ? request.getTenant().getId() : null,
-            request.getTenant() != null ? request.getTenant().getUsername() : null,
+            request.getPropertyId(),
+            request.getPropertyAddress(),
+            request.getTenantId(),
+            request.getTenantUsername(),
             request.getDescription(),
             request.getStatus(),
             request.getReportedAt() != null ? request.getReportedAt().toInstant(ZoneOffset.UTC) : null,
