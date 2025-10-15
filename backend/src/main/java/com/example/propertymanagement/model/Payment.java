@@ -36,9 +36,35 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "lease_id", nullable = false)
-    private Lease lease;
+    /**
+     * 租约ID（遵循阿里规范，不使用物理外键）
+     */
+    @Column(name = "lease_id", nullable = false)
+    private Long leaseId;
+    
+    /**
+     * 租户ID（冗余字段，避免关联查询）
+     */
+    @Column(name = "tenant_id")
+    private Long tenantId;
+    
+    /**
+     * 租户用户名（冗余字段，避免关联查询）
+     */
+    @Column(name = "tenant_username", length = 50)
+    private String tenantUsername;
+    
+    /**
+     * 物业ID（冗余字段，避免关联查询）
+     */
+    @Column(name = "property_id")
+    private Long propertyId;
+    
+    /**
+     * 物业地址（冗余字段，避免关联查询）
+     */
+    @Column(name = "property_address", length = 255)
+    private String propertyAddress;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;

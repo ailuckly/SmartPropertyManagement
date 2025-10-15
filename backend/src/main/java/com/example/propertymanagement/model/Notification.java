@@ -45,11 +45,16 @@ public class Notification {
     private String content;
 
     /**
-     * 接收通知的用户
+     * 接收通知的用户ID（遵循阿里规范，不使用物理外键）
      */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipient_id", nullable = false)
-    private User recipient;
+    @Column(name = "recipient_id", nullable = false)
+    private Long recipientId;
+    
+    /**
+     * 接收通知的用户名（冗余字段，避免关联查询）
+     */
+    @Column(name = "recipient_username", length = 50)
+    private String recipientUsername;
 
     /**
      * 是否已读

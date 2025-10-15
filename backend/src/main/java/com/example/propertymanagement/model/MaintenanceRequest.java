@@ -36,13 +36,29 @@ public class MaintenanceRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "property_id", nullable = false)
-    private Property property;
+    /**
+     * 物业ID（遵循阿里规范，不使用物理外键）
+     */
+    @Column(name = "property_id", nullable = false)
+    private Long propertyId;
+    
+    /**
+     * 物业地址（冗余字段，避免关联查询）
+     */
+    @Column(name = "property_address", length = 255)
+    private String propertyAddress;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    private User tenant;
+    /**
+     * 租户ID（遵循阿里规范，不使用物理外键）
+     */
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+    
+    /**
+     * 租户用户名（冗余字段，避免关联查询）
+     */
+    @Column(name = "tenant_username", length = 50)
+    private String tenantUsername;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;

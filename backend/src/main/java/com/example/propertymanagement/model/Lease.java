@@ -38,13 +38,41 @@ public class Lease {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "property_id", nullable = false)
-    private Property property;
+    /**
+     * 物业ID（遵循阿里规范，不使用物理外键）
+     */
+    @Column(name = "property_id", nullable = false)
+    private Long propertyId;
+    
+    /**
+     * 物业地址（冗余字段，避免关联查询）
+     */
+    @Column(name = "property_address", length = 255)
+    private String propertyAddress;
+    
+    /**
+     * 物业业主ID（冗余字段，避免关联查询）
+     */
+    @Column(name = "owner_id", nullable = false)
+    private Long ownerId;
+    
+    /**
+     * 业主用户名（冗余字段，避免关联查询）
+     */
+    @Column(name = "owner_username", length = 50)
+    private String ownerUsername;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "tenant_id", nullable = false)
-    private User tenant;
+    /**
+     * 租户ID（遵循阿里规范，不使用物理外键）
+     */
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+    
+    /**
+     * 租户用户名（冗余字段，避免关联查询）
+     */
+    @Column(name = "tenant_username", length = 50)
+    private String tenantUsername;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;

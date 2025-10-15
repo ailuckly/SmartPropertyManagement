@@ -37,9 +37,17 @@ public class Property {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
+    /**
+     * 业主ID（遵循阿里规范，不使用物理外键）
+     */
+    @Column(name = "owner_id", nullable = false)
+    private Long ownerId;
+    
+    /**
+     * 业主用户名（冗余字段，避免关联查询）
+     */
+    @Column(name = "owner_username", length = 50)
+    private String ownerUsername;
 
     @Column(nullable = false, length = 255)
     private String address;
@@ -72,6 +80,9 @@ public class Property {
 
     @Column(name = "rent_amount", precision = 10, scale = 2)
     private BigDecimal rentAmount;
+
+    @Column(name = "cover_image_path", length = 255)
+    private String coverImagePath;
 
     @CreationTimestamp
     @Column(name = "gmt_create", updatable = false, nullable = false)

@@ -1,8 +1,10 @@
 package com.example.propertymanagement.model;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -67,11 +69,14 @@ public class User {
     @Builder.Default
     private Integer isDeleted = 0;
 
+    /**
+     * 用户角色关系（不使用物理外键，通过业务逻辑维护一致性）
+     */
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_role",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
+        joinColumns = @JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "none", value = ConstraintMode.NO_CONSTRAINT)),
+        inverseJoinColumns = @JoinColumn(name = "role_id", foreignKey = @ForeignKey(name = "none", value = ConstraintMode.NO_CONSTRAINT))
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
