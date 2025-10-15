@@ -75,9 +75,15 @@ export const useAuthStore = defineStore('auth', {
         notify('您已退出登录', 'info');
       } catch (error) {
         // ignore network errors during logout
+        console.warn('Logout request failed, but clearing local state anyway:', error);
       } finally {
         this.user = null;
         this.initialized = true;
+        
+        // Force a page reload to completely clear any cached state
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       }
     }
   }

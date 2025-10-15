@@ -1,5 +1,12 @@
 <template>
-  <el-container class="app-container">
+  <!-- 登录注册页面：全屏显示，无导航栏 -->
+  <template v-if="isAuthPage">
+    <NotifyHost />
+    <RouterView />
+  </template>
+  
+  <!-- 应用主页面：带导航栏和侧边栏 -->
+  <el-container v-else class="app-container">
     <!-- Top header -->
     <el-header class="app-header">
       <div class="logo-group">
@@ -84,13 +91,6 @@
               <el-icon><User /></el-icon>
               <span>用户管理</span>
             </el-menu-item>
-            
-            <el-divider style="margin: 8px 0" />
-            <div class="menu-group-title">开发测试</div>
-            <el-menu-item index="/file-upload-test">
-              <el-icon><Upload /></el-icon>
-              <span>文件上传测试</span>
-            </el-menu-item>
           </template>
           
           <!-- 业主菜单 -->
@@ -165,8 +165,7 @@ import {
   Tools,
   Document,
   Wallet,
-  ArrowRight,
-  Upload
+  ArrowRight
 } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
@@ -184,14 +183,14 @@ const isTenant = computed(() => authStore.hasAnyRole(['ROLE_TENANT']));
 const isOwnerOrAdmin = computed(() => authStore.hasAnyRole(['ROLE_OWNER', 'ROLE_ADMIN']));
 const pageTitle = computed(() => route.meta?.title ?? '');
 const activeMenu = computed(() => route.path);
+const isAuthPage = computed(() => ['/login', '/register'].includes(route.path));
 
-const handleCommand = (command) => {
+const handleCommand = async (command) => {
   if (command === 'profile') {
     router.push('/profile');
   } else if (command === 'logout') {
-    authStore.logout();
-    ElMessage.success('已退出登录');
-    router.push('/login');
+    await authStore.logout();
+    // logout method will automatically reload the page
   }
 };
 </script>
