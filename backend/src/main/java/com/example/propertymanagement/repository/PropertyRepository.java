@@ -38,7 +38,7 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
      * @param pageable 分页参数
      * @return 匹配的物业列表
      */
-    @Query("SELECT p FROM Property p WHERE p.owner.id = :ownerId AND (" +
+    @Query("SELECT p FROM Property p WHERE p.ownerId = :ownerId AND (" +
            "LOWER(p.address) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(p.city) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(p.state) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -46,4 +46,33 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     Page<Property> searchByOwnerIdAndKeyword(@Param("ownerId") Long ownerId, 
                                               @Param("keyword") String keyword, 
                                               Pageable pageable);
+                                              
+    /**
+     * 批量删除指定ID的物业
+     * @param ids 物业ID列表
+     */
+    void deleteAllByIdIn(List<Long> ids);
+    
+    /**
+     * 高级筛选查询物业
+     */
+    @Query("SELECT p FROM Property p WHERE " +
+           "(:ownerId IS NULL OR p.ownerId = :ownerId) AND " +
+           "(:status IS NULL OR p.status = :status) AND " +
+           "(:propertyType IS NULL OR p.propertyType = :propertyType) AND " +
+           "(:minRent IS NULL OR p.rentAmount >= :minRent) AND " +
+           "(:maxRent IS NULL OR p.rentAmount <= :maxRent) AND " +
+           "(:minBedrooms IS NULL OR p.bedrooms >= :minBedrooms) AND " +
+           "(:maxBedrooms IS NULL OR p.bedrooms <= :maxBedrooms) AND " +
+           "(:city IS NULL OR LOWER(p.city) LIKE LOWER(CONCAT('%', :city, '%')))")
+    Page<Property> findPropertiesWithFilters(
+        @Param("ownerId") Long ownerId,
+        @Param("status") String status,
+        @Param("propertyType") String propertyType,
+        @Param("minRent") Double minRent,
+        @Param("maxRent") Double maxRent,
+        @Param("minBedrooms") Integer minBedrooms,
+        @Param("maxBedrooms") Integer maxBedrooms,
+        @Param("city") String city,
+        Pageable pageable);
 }

@@ -14,31 +14,25 @@ import java.util.List;
 
 public interface LeaseRepository extends JpaRepository<Lease, Long> {
 
-    @EntityGraph(attributePaths = {"property", "property.owner", "tenant"})
     Page<Lease> findAll(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"property", "property.owner", "tenant"})
     Page<Lease> findAllByTenantId(Long tenantId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"property", "property.owner", "tenant"})
-    Page<Lease> findAllByPropertyOwnerId(Long ownerId, Pageable pageable);
+    Page<Lease> findAllByOwnerId(Long ownerId, Pageable pageable);
 
     // 统计查询方法
-    Long countByProperty_OwnerId(Long ownerId);
+    Long countByOwnerId(Long ownerId);
     
     Long countByTenantId(Long tenantId);
     
     List<Lease> findByEndDateBetweenAndStatus(LocalDate startDate, LocalDate endDate, LeaseStatus status);
     
-    List<Lease> findByProperty_OwnerIdAndEndDateBetweenAndStatus(Long ownerId, LocalDate startDate, LocalDate endDate, LeaseStatus status);
+    List<Lease> findByOwnerIdAndEndDateBetweenAndStatus(Long ownerId, LocalDate startDate, LocalDate endDate, LeaseStatus status);
     
-    @EntityGraph(attributePaths = {"property", "tenant"})
     List<Lease> findTop5ByOrderByIdDesc();
     
-    @EntityGraph(attributePaths = {"property", "tenant"})
-    List<Lease> findTop5ByProperty_OwnerIdOrderByIdDesc(Long ownerId);
+    List<Lease> findTop5ByOwnerIdOrderByIdDesc(Long ownerId);
     
-    @EntityGraph(attributePaths = {"property", "tenant"})
     List<Lease> findTop5ByTenantIdOrderByIdDesc(Long tenantId);
     
     /**
@@ -47,9 +41,8 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
      * @param pageable 分页参数
      * @return 匹配的租约列表
      */
-    @EntityGraph(attributePaths = {"property", "property.owner", "tenant"})
-    @Query("SELECT l FROM Lease l JOIN l.property p JOIN l.tenant t " +
-           "WHERE LOWER(t.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(p.address) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    @Query("SELECT l FROM Lease l WHERE " +
+           "LOWER(l.tenantUsername) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(l.propertyAddress) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Lease> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

@@ -32,14 +32,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      * 批量标记用户的所有通知为已读
      */
     @Modifying
-    @Query("UPDATE Notification n SET n.isRead = true, n.readAt = CURRENT_TIMESTAMP WHERE n.recipient.id = :recipientId AND n.isRead = false")
+    @Query("UPDATE Notification n SET n.isRead = true, n.readAt = CURRENT_TIMESTAMP WHERE n.recipientId = :recipientId AND n.isRead = false")
     int markAllAsReadByRecipient(@Param("recipientId") Long recipientId);
 
     /**
      * 删除指定用户的所有已读通知
      */
     @Modifying
-    @Query("DELETE FROM Notification n WHERE n.recipient.id = :recipientId AND n.isRead = true")
+    @Query("DELETE FROM Notification n WHERE n.recipientId = :recipientId AND n.isRead = true")
     int deleteAllReadByRecipient(@Param("recipientId") Long recipientId);
 
     /**
