@@ -21,3 +21,5 @@ Thumbs.db
 # Logs
 *.log
 node_modules
+.backend/upload
+generate_ppt.py
