@@ -22,4 +22,8 @@ Thumbs.db
 *.log
 node_modules
 .backend/upload
+
+# Personal notes and presentation files
 generate_ppt.py
+docs/learnWord.md
+*.pptx
