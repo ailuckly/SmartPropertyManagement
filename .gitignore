@@ -1,29 +1,63 @@
-
 # Build outputs
 backend/target/
 frontend/dist/
+frontend/.vite/
 
 # Node dependencies
+node_modules/
 frontend/node_modules/
+package-lock.json
 
-# Maven wrappers (if generated later)
+# Maven wrappers
 backend/.mvn/
 backend/mvnw
 backend/mvnw.cmd
 
-# IDE / OS files
+# IDE / Editor files
 .idea/
 .vscode/
 *.iml
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # Logs
 *.log
-node_modules
+logs/
+
+# Upload files
+uploads/
+backend/uploads/
 .backend/upload
 
 # Personal notes and presentation files
 generate_ppt.py
-docs/learnWord.md
 *.pptx
+docs/learnWord.md
+docs/presentation*.md
+docs/presentation*.pptx
+.doc-cleanup-summary.md
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
