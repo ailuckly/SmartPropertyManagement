@@ -13,6 +13,11 @@ public record MaintenanceRequestDto(
     String description,
     MaintenanceStatus status,
     Instant reportedAt,
-    Instant completedAt
+    Instant completedAt,
+    // AI分析结果
+    String aiCategory,
+    String aiUrgencyLevel,
+    String aiSolution,
+    Double aiEstimatedCost
 ) {
 }

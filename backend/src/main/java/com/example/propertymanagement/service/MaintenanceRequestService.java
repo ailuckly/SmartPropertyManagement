@@ -1,5 +1,6 @@
 package com.example.propertymanagement.service;
 
+import com.example.propertymanagement.dto.ai.MaintenanceAnalysisResult;
 import com.example.propertymanagement.dto.common.PageResponse;
 import com.example.propertymanagement.dto.maintenance.MaintenanceRequestCreate;
 import com.example.propertymanagement.dto.maintenance.MaintenanceRequestDto;
@@ -17,6 +18,8 @@ import com.example.propertymanagement.repository.PropertyRepository;
 import com.example.propertymanagement.repository.UserRepository;
 import com.example.propertymanagement.security.UserPrincipal;
 import com.example.propertymanagement.util.SecurityUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,12 +30,16 @@ import java.time.Instant;
 /**
  * 维修工单业务服务：集中处理工单提报、分页查询、状态更新等逻辑，并在服务层落地角色权限控制。
  */
+@Slf4j
 @Service
 public class MaintenanceRequestService {
 
     private final MaintenanceRequestRepository maintenanceRequestRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    
+    @Autowired(required = false)
+    private AIService aiService;
 
     public MaintenanceRequestService(MaintenanceRequestRepository maintenanceRequestRepository,
                                      PropertyRepository propertyRepository,
@@ -71,6 +78,25 @@ public class MaintenanceRequestService {
             .description(requestDto.description())
             .status(MaintenanceStatus.PENDING)
             .build();
+        
+        // AI智能分析
+        try {
+            if (aiService != null) {
+                MaintenanceAnalysisResult analysis = aiService.analyzeMaintenanceRequest(
+                    requestDto.description(),
+                    property.getAddress()
+                );
+                if (analysis.isSuccess()) {
+                    request.setAiCategory(analysis.getCategory());
+                    request.setAiUrgencyLevel(analysis.getUrgencyLevel());
+                    request.setAiSolution(analysis.getSolution());
+                    request.setAiEstimatedCost(analysis.getEstimatedCost());
+                }
+            }
+        } catch (Exception e) {
+            // AI失败不影响业务流程
+            log.warn("维修工单AI分析失败", e);
+        }
 
         return MaintenanceMapper.toDto(maintenanceRequestRepository.save(request));
     }

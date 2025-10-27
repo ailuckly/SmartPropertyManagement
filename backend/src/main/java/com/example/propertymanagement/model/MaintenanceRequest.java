@@ -67,6 +67,30 @@ public class MaintenanceRequest {
     @Column(nullable = false, length = 32)
     @Builder.Default
     private MaintenanceStatus status = MaintenanceStatus.PENDING;
+    
+    /**
+     * AI分析 - 问题分类
+     */
+    @Column(name = "ai_category", length = 50)
+    private String aiCategory;
+    
+    /**
+     * AI分析 - 紧急程度
+     */
+    @Column(name = "ai_urgency_level", length = 20)
+    private String aiUrgencyLevel;
+    
+    /**
+     * AI分析 - 维修建议
+     */
+    @Column(name = "ai_solution", columnDefinition = "TEXT")
+    private String aiSolution;
+    
+    /**
+     * AI分析 - 预估费用
+     */
+    @Column(name = "ai_estimated_cost")
+    private Double aiEstimatedCost;
 
     @CreationTimestamp
     @Column(name = "reported_at", nullable = false, updatable = false)

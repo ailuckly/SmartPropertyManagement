@@ -20,7 +20,11 @@ public final class MaintenanceMapper {
             request.getDescription(),
             request.getStatus(),
             request.getReportedAt() != null ? request.getReportedAt().toInstant(ZoneOffset.UTC) : null,
-            request.getCompletedAt() != null ? request.getCompletedAt().toInstant(ZoneOffset.UTC) : null
+            request.getCompletedAt() != null ? request.getCompletedAt().toInstant(ZoneOffset.UTC) : null,
+            request.getAiCategory(),
+            request.getAiUrgencyLevel(),
+            request.getAiSolution(),
+            request.getAiEstimatedCost()
         );
     }
 }
