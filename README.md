@@ -68,8 +68,18 @@ docker compose up --build
 
 首次启动后，可在 `/api/auth/register` 创建管理员或业主账号，也可直接在数据库插入初始化数据。
 
+## AI智能功能
+
+本平台集成了AI智能客服助手和维修工单智能分析功能,支持:
+
+- 💬 全局AI聊天助手(右下角悬浮球)
+- 🔧 维修工单自动分类、紧急度评估、维修建议和费用预估
+
+详细配置请查看: [docs/AI_FEATURES.md](./docs/AI_FEATURES.md)
+
 ## 注意事项
 
-- 由于环境默认提供 JDK 17，后端以 Java 17 构建。若部署在支持 Java 21 的服务器，只需将 `pom.xml` 中 `java.version` 调整即可。
-- JWT 默认密钥为 `change-me-in-prod`，生产环境请修改环境变量 `JWT_SECRET`。
-- Docker 默认暴露 MySQL 3306，若本机已有数据库服务，请修改 `docker-compose.yml` 中端口映射。
+- 由于环境默认提供 JDK 17,后端以 Java 17 构建。若部署在支持 Java 21 的服务器,只需将 `pom.xml` 中 `java.version` 调整即可。
+- JWT 默认密钥为 `change-me-in-prod`,生产环境请修改环境变量 `JWT_SECRET`。
+- Docker 默认暴露 MySQL 3306,若本机已有数据库服务,请修改 `docker-compose.yml` 中端口映射。
+- AI功能需要配置API Key,默认关闭。启用方法见 [docs/AI_FEATURES.md](./docs/AI_FEATURES.md)。
