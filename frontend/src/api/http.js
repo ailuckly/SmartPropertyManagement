@@ -11,6 +11,29 @@ const api = axios.create({
 let isRefreshing = false;
 let refreshSubscribers = [];
 
+// 请求拦截器：自动添加token
+api.interceptors.request.use(
+  (config) => {
+    // 从cookie中获取token并添加到请求头
+    const token = getCookie('ACCESS_TOKEN');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// 工具函数：从cookie获取值
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
 // 订阅刷新结果：回调接收可选的 error 参数
 const subscribeTokenRefresh = (callback) => {
   refreshSubscribers.push(callback);

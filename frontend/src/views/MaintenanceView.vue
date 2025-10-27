@@ -41,10 +41,19 @@
 
             <el-form-item>
               <el-button type="primary" native-type="submit" :loading="submitting" style="width: 100%">
-                提交申请
+                <el-icon v-if="!submitting"><MagicStick /></el-icon>
+                {{ submitting ? 'AI分析中...' : '提交申请' }}
               </el-button>
             </el-form-item>
           </el-form>
+
+          <!-- AI助手 -->
+          <AIAssistant
+            :visible="aiAssistant.visible"
+            :analyzing="aiAssistant.analyzing"
+            :result="aiAssistant.result"
+            @close="handleCloseAI"
+          />
 
           <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon style="margin-top: 12px" />
         </el-card>
@@ -107,6 +116,40 @@
             </el-table-column>
             <el-table-column prop="tenantUsername" label="租客" width="100" />
             <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
+            <!-- AI分析结果 -->
+            <el-table-column label="AI分析" width="200">
+              <template #default="{ row }">
+                <div v-if="row.aiCategory || row.aiUrgencyLevel" class="ai-tags">
+                  <el-tag v-if="row.aiCategory" size="small" :type="getAICategoryColor(row.aiCategory)">
+                    {{ row.aiCategory }}
+                  </el-tag>
+                  <el-tag v-if="row.aiUrgencyLevel" size="small" :type="getAIUrgencyColor(row.aiUrgencyLevel)" effect="dark">
+                    {{ row.aiUrgencyLevel }}
+                  </el-tag>
+                  <el-popover
+                    v-if="row.aiSolution"
+                    placement="left"
+                    :width="300"
+                    trigger="hover"
+                  >
+                    <template #reference>
+                      <el-icon class="ai-solution-icon"><MagicStick /></el-icon>
+                    </template>
+                    <div class="ai-solution-popover">
+                      <div class="popover-title">
+                        <el-icon><Lightning /></el-icon>
+                        维修建议
+                      </div>
+                      <div class="popover-content">{{ row.aiSolution }}</div>
+                      <div v-if="row.aiEstimatedCost" class="popover-cost">
+                        预估费用：<span class="cost-value">¥{{ row.aiEstimatedCost }}</span>
+                      </div>
+                    </div>
+                  </el-popover>
+                </div>
+                <span v-else class="no-ai">-</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="getStatusType(row.status)" size="small">
@@ -158,9 +201,10 @@
 import { reactive, ref, onMounted } from 'vue';
 import api from '../api/http';
 import { useAuthStore } from '../stores/auth';
-import { Search, RefreshLeft, Tools, Download } from '@element-plus/icons-vue';
+import { Search, RefreshLeft, Tools, Download, MagicStick, Lightning } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { exportMaintenanceRequests } from '@/utils/download';
+import AIAssistant from '@/components/AIAssistant.vue';
 
 /**
  * Maintenance centre: tenants can submit requests while owners/admins can track and update ticket status.
@@ -196,6 +240,13 @@ const rules = {
 };
 
 const error = ref('');
+
+// AI助手状态
+const aiAssistant = reactive({
+  visible: false,
+  analyzing: false,
+  result: null
+});
 
 /**
  * Retrieves maintenance requests appropriate for the logged-in user.
@@ -233,8 +284,28 @@ const handleSubmit = async () => {
     submitting.value = true;
     error.value = '';
     
+    // 显示AI分析中
+    aiAssistant.visible = true;
+    aiAssistant.analyzing = true;
+    aiAssistant.result = null;
+    
     try {
-      await api.post('/maintenance-requests', form);
+      const { data } = await api.post('/maintenance-requests', form);
+      
+      // 显示AI分析结果
+      if (data.aiCategory || data.aiUrgencyLevel) {
+        aiAssistant.result = {
+          success: true,
+          category: data.aiCategory,
+          urgencyLevel: data.aiUrgencyLevel,
+          solution: data.aiSolution,
+          estimatedCost: data.aiEstimatedCost
+        };
+      } else {
+        // 如果没有AI分析结果，隐藏助手
+        aiAssistant.visible = false;
+      }
+      
       ElMessage.success('维修申请提交成功');
       form.propertyId = null;
       form.description = '';
@@ -243,9 +314,15 @@ const handleSubmit = async () => {
       }
       fetchRequests();
     } catch (err) {
+      // AI分析失败也显示
+      aiAssistant.result = {
+        success: false,
+        errorMessage: 'AI分析暂时不可用'
+      };
       error.value = err.response?.data?.message ?? '提交失败，请稍后再试';
     } finally {
       submitting.value = false;
+      aiAssistant.analyzing = false;
     }
   });
 };
@@ -351,6 +428,34 @@ const handleExport = async () => {
   }
 };
 
+// 关闭AI助手
+const handleCloseAI = () => {
+  aiAssistant.visible = false;
+};
+
+// AI分析结果颜色映射
+const getAICategoryColor = (category) => {
+  const colorMap = {
+    '水电': 'primary',
+    '家电': 'success',
+    '家具': 'warning',
+    '门窗': 'info',
+    '清洁': '',
+    '其他': 'info'
+  };
+  return colorMap[category] || 'info';
+};
+
+const getAIUrgencyColor = (level) => {
+  const colorMap = {
+    '低': 'info',
+    '中': 'warning',
+    '高': 'danger',
+    '紧急': 'danger'
+  };
+  return colorMap[level] || 'info';
+};
+
 onMounted(() => {
   fetchRequests();
 });
@@ -395,6 +500,71 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
+}
+
+/* AI分析结果样式 */
+.ai-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ai-solution-icon {
+  color: #667eea;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.ai-solution-icon:hover {
+  color: #764ba2;
+  transform: scale(1.1);
+}
+
+.ai-solution-popover {
+  padding: 8px;
+}
+
+.popover-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.popover-title .el-icon {
+  color: #667eea;
+}
+
+.popover-content {
+  color: #606266;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.popover-cost {
+  padding-top: 8px;
+  border-top: 1px solid #ebeef5;
+  font-size: 13px;
+  color: #606266;
+}
+
+.popover-cost .cost-value {
+  color: #f56c6c;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.no-ai {
+  color: #c0c4cc;
+  font-size: 14px;
 }
 
 @media (max-width: 1200px) {

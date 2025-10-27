@@ -146,6 +146,9 @@
         <RouterView />
       </el-main>
     </el-container>
+    
+    <!-- 全局AI聊天助手 -->
+    <GlobalAIChat v-if="isAuthenticated" />
   </el-container>
 </template>
 
@@ -155,6 +158,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 import NotifyHost from './components/NotifyHost.vue';
 import NotificationBell from './components/NotificationBell.vue';
+import GlobalAIChat from './components/GlobalAIChat.vue';
 import {
   Search,
   User,
