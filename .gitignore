@@ -61,3 +61,6 @@ docs/presentation*.pptx
 *.db
 *.sqlite
 *.sqlite3
+
+# Ai doc 
+WARP.md
